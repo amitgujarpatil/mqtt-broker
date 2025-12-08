@@ -378,7 +378,12 @@ export class RabbitMQService implements OnModuleInit {
       } else if (typeof payload === 'string') {
         content = Buffer.from(payload);
       } else {
-        content = Buffer.from(JSON.stringify(payload));
+        content = Buffer.from(
+          JSON.stringify({
+            algorithm: options?.compressionAlgorithm || 'gzip',
+            data: payload,
+          }),
+        );
       }
 
       const compressionResult = await this.compressionService.compress(
@@ -389,6 +394,18 @@ export class RabbitMQService implements OnModuleInit {
           algorithm: options?.compressionAlgorithm,
         },
       );
+
+      // console.log('compressionResult', compressionResult);
+
+      // decompress
+      // const decompressed = await this.compressionService.decompress(
+      //   compressionResult.data,
+      //   {
+      //     algorithm: 'gzip',
+      //   },
+      // );
+
+      //console.log('decompressed', decompressed.toString());
 
       // Prepare message headers with compression metadata
       const headers = {

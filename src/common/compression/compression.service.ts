@@ -186,10 +186,72 @@ export class CompressionService {
 
       return decompressed;
     } catch (error) {
-      this._logger.error('Decompression failed', error);
+      // Handle Z_DATA_ERROR gracefully
+      if (error.code === 'Z_DATA_ERROR' || error.errno === -3) {
+        this._logger.warn(
+          `Decompression failed (Z_DATA_ERROR) - data might not be compressed or wrong algorithm. ` +
+            `Returning original content. Error: ${error.message}`,
+        );
+        // Return original content if decompression fails
+        return content;
+      }
+
+      this._logger.error('Decompression failed with unexpected error', error);
       throw new Error(
         `Failed to decompress message using ${algorithm}: ${error.message}`,
       );
+    }
+  }
+
+  /**
+   * Safely decompress content - returns original if decompression fails
+   * This is useful when you're not sure if content is compressed
+   * @param content Buffer to decompress
+   * @param options Decompression options
+   * @returns Decompressed buffer or original content on failure
+   */
+  async safeDecompress(
+    content: Buffer,
+    options?: DecompressionOptions,
+  ): Promise<Buffer> {
+    try {
+      return await this.decompress(content, options);
+    } catch (error) {
+      this._logger.warn(
+        'Safe decompression fallback to original content',
+        error.message,
+      );
+      return content;
+    }
+  }
+
+  /**
+   * Check if buffer is compressed by checking magic bytes
+   * @param buffer Buffer to check
+   * @param algorithm Compression algorithm to check for
+   * @returns true if buffer appears to be compressed
+   */
+  isCompressed(buffer: Buffer, algorithm?: string): boolean {
+    if (!buffer || buffer.length < 2) {
+      return false;
+    }
+
+    const algo = algorithm || this._options.algorithm;
+
+    switch (algo) {
+      case 'gzip':
+        // Gzip magic bytes: 0x1f 0x8b
+        return buffer[0] === 0x1f && buffer[1] === 0x8b;
+
+      case 'deflate':
+        // Deflate magic bytes: 0x78 (followed by 0x01, 0x9c, 0xda, or 0x5e)
+        return (
+          buffer[0] === 0x78 && [0x01, 0x9c, 0xda, 0x5e].includes(buffer[1])
+        );
+
+      default:
+        // Default to gzip check
+        return buffer[0] === 0x1f && buffer[1] === 0x8b;
     }
   }
 
@@ -198,6 +260,38 @@ export class CompressionService {
    */
   shouldCompress(size: number): boolean {
     return this._options.enabled && size >= this._options.threshold;
+  }
+
+  /**
+   * Get compression statistics
+   */
+  getStats() {
+    const avgRatio =
+      this._stats.totalCompressionRatios.length > 0
+        ? this._stats.totalCompressionRatios.reduce((a, b) => a + b, 0) /
+          this._stats.totalCompressionRatios.length
+        : 0;
+
+    return {
+      totalCompressed: this._stats.totalCompressed,
+      totalDecompressed: this._stats.totalDecompressed,
+      totalBytesSaved: this._stats.totalBytesSaved,
+      averageCompressionRatio: avgRatio,
+      compressionEnabled: this._options.enabled,
+    };
+  }
+
+  /**
+   * Reset statistics
+   */
+  resetStats(): void {
+    this._stats = {
+      totalCompressed: 0,
+      totalDecompressed: 0,
+      totalBytesSaved: 0,
+      totalCompressionRatios: [],
+    };
+    this._logger.log('Compression statistics reset');
   }
 
   /**
@@ -217,6 +311,10 @@ export class CompressionService {
   getOptions(): CompressionOptions {
     return { ...this._options };
   }
+
+  // ============================================
+  // Private compression/decompression methods
+  // ============================================
 
   private async _compressGzip(
     buffer: Buffer,

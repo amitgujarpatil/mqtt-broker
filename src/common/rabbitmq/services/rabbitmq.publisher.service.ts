@@ -77,7 +77,9 @@ export class RabbitMQPublisherService
       });
       this._logger.log(`Command published to device.command.send: ${cmd}`);
     };
-   // setInterval(publishDeviceCommand, 1000);
+
+    // publishDeviceCommand();
+    setInterval(publishDeviceCommand, 5000);
   }
 
   async publishToMessageReceiveQueue(

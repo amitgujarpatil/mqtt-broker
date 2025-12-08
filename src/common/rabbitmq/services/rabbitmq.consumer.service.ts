@@ -1,12 +1,10 @@
 import { ConfigVariablesType } from 'src/config';
 import { RabbitMQService } from './rabbitmq.service';
 import { ConfigService } from '@nestjs/config';
-import { IRMQConfigVariables } from 'src/config/config.types';
 import {
   Injectable,
   Logger,
   OnApplicationShutdown,
-  OnModuleDestroy,
   OnModuleInit,
 } from '@nestjs/common';
 import RmqQueueEnum, { RmqQueueEnumType } from '../enum/rmq.queue.enum';
@@ -16,28 +14,9 @@ import {
   ConsumeMessage as RMQConsumeMessage,
 } from 'amqplib';
 import { CompressionService } from 'src/common/compression/compression.service';
-import amqp, { ChannelWrapper } from 'amqp-connection-manager';
+import { ChannelWrapper } from 'amqp-connection-manager';
 import { IAmqpConnectionManager } from 'amqp-connection-manager/dist/types/AmqpConnectionManager';
-
-interface IRMQSubcribeOptions {
-  queue: RmqQueueEnumType;
-  handler: (
-    msg: RMQConsumeMessage | null,
-    channel: ConfirmChannel,
-    fields?: MessageFields,
-  ) => Promise<void>;
-  prefetch?: number;
-  autoCommit?: boolean;
-}
-
-interface IRMQListernerOptions {
-  [queue: string]: {
-    queue: RmqQueueEnumType;
-    prefetch?: number;
-    autoCommit?: boolean;
-    handlers: Array<IRMQSubcribeOptions['handler']>;
-  };
-}
+import { IRMQListerners, RMQConsumerHandler } from '../types/index.types';
 
 const DEFAULT_PREFETCH_COUNT = 1;
 
@@ -49,7 +28,7 @@ export class RabbitMQConsumerService
   protected readonly _logger = new Logger(RabbitMQConsumerService.name);
   private _consumerChannels: Map<string, ChannelWrapper> = new Map();
   private _connection: IAmqpConnectionManager;
-  private _listeners: IRMQListernerOptions = {};
+  private _listeners: IRMQListerners = {};
 
   constructor(
     configService: ConfigService<ConfigVariablesType>,
@@ -65,17 +44,20 @@ export class RabbitMQConsumerService
 
     this._connection = await this.createConnection(connectionName);
 
-    this.subcribe([
+    this.subscribe([
       {
         queue: RmqQueueEnum.DEVICE_COMMAND_SEND,
-        autoCommit: false,
+        autoCommit: true,
         prefetch: 1,
-        handler: async (msg, channel, routingKey) => {
-          console.log(msg);
-          //  console.log(msg, routingKey);
-          //   const content = msg.content.toString();
-          //   this._logger.log(`Received message: ${content}`);
-          //   channel.ack(msg);
+        handler: async (msg, channel, fields) => {
+          console.log('Payload:', msg);
+          console.log('Routing Key:', fields);
+
+          // Acknowledge the message
+          // channel.ack(msg);
+          // deleay for testing nack
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+          return true;
         },
       },
     ]);
@@ -83,8 +65,8 @@ export class RabbitMQConsumerService
     await this.startConsumer();
   }
 
-  subcribe(options: Array<IRMQSubcribeOptions>) {
-    options.forEach(({ queue, handler, prefetch, autoCommit }) => {
+  subscribe(handlers: Array<RMQConsumerHandler>) {
+    handlers.forEach(({ queue, handler, prefetch, autoCommit }) => {
       const existing = this._listeners[queue];
       if (existing) {
         existing.handlers.push(handler);
@@ -99,97 +81,141 @@ export class RabbitMQConsumerService
     });
   }
 
-  private async _onMessage(
+  private async _processMessage(
     queue: RmqQueueEnumType,
-    msg: RMQConsumeMessage | null | any,
+    message: RMQConsumeMessage,
     channel: ConfirmChannel,
-    fields?: MessageFields,
+    fields: MessageFields,
   ): Promise<void> {
-    if (msg) {
-      const callbacks = this._listeners[queue]['handlers'] || [];
-      const promises = callbacks.map((handler) =>
-        handler(msg, channel, fields),
+    if (message) {
+      const handlers = this._listeners[queue]?.handlers || [];
+      const handlerPromises = handlers.map((handler) =>
+        handler(message, channel, fields),
       );
-      await Promise.all(promises);
+      await Promise.all(handlerPromises);
     }
   }
 
-  private async _decompressMessage(msg: RMQConsumeMessage) {
-    const isCompressed = msg.properties.headers?.compressed === true;
-    console.log('isCompressed', isCompressed, msg);
-    if (isCompressed) {
-      const algorithm = msg.properties.headers?.compressionAlgorithm;
-      return this.compressionService.decompress(msg.content, { algorithm });
+  private async _decompressMessage(message: RMQConsumeMessage) {
+    let content = message.content.toString();
+    try {
+      const isCompressed = message.properties.headers?.compressed === true;
+
+      if (isCompressed) {
+        const algorithm = message.properties.headers?.compressionAlgorithm;
+        const buffer = await this.compressionService.decompress(
+          message.content,
+          { algorithm },
+        );
+        content = buffer.toString();
+      }
+      return content;
+    } catch (error) {
+      this._logger.error('Failed to decompress message', error);
+      return content;
     }
-    return msg.content.toString();
+  }
+
+  private async _shutdownConsumer() {
+    this._logger.log('Shutting down RabbitMQ consumers...');
+
+    try {
+      const channelClosePromises = Array.from(
+        this._consumerChannels.values(),
+      ).map(async (channel) => {
+        try {
+          await channel.close();
+        } catch (error) {
+          this._logger.warn('Error closing channel during shutdown', error);
+        }
+      });
+
+      await Promise.all(channelClosePromises);
+      this._logger.log('RabbitMQ consumers shut down successfully');
+    } catch (error) {
+      this._logger.error(`Error shutting down RabbitMQ consumers: ${error}`);
+    }
+  }
+
+  private _setupConsumerFunction(listener: IRMQListerners[string]) {
+    return async (chan: ConfirmChannel) => {
+      chan.prefetch(listener.prefetch || DEFAULT_PREFETCH_COUNT);
+
+      await chan.consume(
+        listener.queue,
+        async (message) => {
+          if (!message) {
+            this._logger.warn(
+              `Received null message from queue: ${listener.queue}`,
+            );
+            return;
+          }
+
+          try {
+            // Decompress the message content
+            const decompressedContent = await this._decompressMessage(message);
+
+            // Parse the decompressed content
+            const parsedPayload = JSON.parse(
+              decompressedContent?.toString() || '{}',
+            )['data'];
+
+            // Now handlers receive the complete message with all RabbitMQ properties
+            await this._processMessage(
+              listener.queue,
+              parsedPayload,
+              chan,
+              message.fields,
+            );
+
+            // Acknowledge the message if autoCommit is enabled
+            if (listener.autoCommit !== false) {
+              chan.ack(message);
+            }
+          } catch (error) {
+            this._logger.error(
+              `Error processing message from ${listener.queue}: ${error.message}`,
+              error.stack,
+            );
+
+            // Reject message if autoCommit is enabled
+            if (listener.autoCommit !== false) {
+              // Don't requeue (false) - will go to DLQ if configured
+              chan.nack(message, false, false);
+            }
+          }
+        },
+        {
+          noAck: !(listener.autoCommit === true),
+          consumerTag: `${listener.queue}-consumer-${Date.now()}`,
+        },
+      );
+
+      this._logger.log(
+        `Consumer started for queue '${listener.queue}' with prefetch: ${listener.prefetch || DEFAULT_PREFETCH_COUNT}`,
+      );
+    };
   }
 
   async startConsumer() {
     const channelPromises = Object.entries(this._listeners).map(
-      async ([key, listener]) => {
+      async ([queueName, listener]) => {
         const channel = await this.createChannel(this._connection, {
-          channelName: `consumer-channel-${listener.queue}`,
+          channelName: `consumer-channel-${queueName}`,
           confirmChannel: true,
-          setupFn: async (chan: ConfirmChannel) => {
-            chan.prefetch(listener.prefetch || DEFAULT_PREFETCH_COUNT);
-
-            await chan.consume(listener.queue, async (message) => {
-              if (message) {
-                try {
-                  // decompress message if needed cause while publishing we might have compressed it
-                  const decompressedContent =
-                    await this._decompressMessage(message);
-                  console.log('decompressedContent', decompressedContent);
-
-                  // process the message
-                  await this._onMessage(
-                    listener.queue,
-                    decompressedContent,
-                    chan,
-                    message.fields,
-                  );
-
-                  // Acknowledge the message if autoCommit is on
-                  if (listener.autoCommit !== false) {
-                    chan.ack(message);
-                  }
-                } catch (error) {
-                  this._logger.error(
-                    `Error processing message from ${listener.queue}: ${error}`,
-                  );
-                  if (listener.autoCommit !== false) {
-                    chan.nack(message, false, false);
-                  }
-                }
-              }
-            });
-          },
+          setupFn: this._setupConsumerFunction(listener),
         });
 
-        this._consumerChannels.set(listener.queue, channel);
+        // Store channel reference for shutdown
+        this._consumerChannels.set(queueName, channel);
       },
     );
 
     await Promise.all(channelPromises);
+    this._logger.log('All consumers started successfully');
   }
 
   async onApplicationShutdown(signal?: string) {
-    this._logger.log(
-      `RabbitMQConsumerService shutting down on signal: ${signal}`,
-    );
-    try {
-      const closeChannelPromises = Array.from(
-        this._consumerChannels.values(),
-      ).map(async (channel) => {
-        await channel.close();
-      });
-
-      await Promise.all(closeChannelPromises);
-      await this._connection.close();
-    } catch (error) {
-      this._logger.error(
-        `Error shutting down RabbitMQConsumerService: ${error}`,
-      );
-    }
+    await this._shutdownConsumer();
   }
 }
