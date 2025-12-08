@@ -88,12 +88,19 @@ const config = (config: Record<string, unknown>) => {
     },
     db: {
       mongo: {
-        uri: process.env.MONGO_URI,
-        dbName: process.env.MONGO_DB_NAME,
+        uri: ENVS.MONGO_URI,
+        dbName: ENVS.MONGO_DB_NAME,
       },
       redis: {
-        url: process.env.REDIS_URI,
-        database: parseInt(process.env.REDIS_DB),
+        url: ENVS.REDIS_URI,
+        database: ENVS.REDIS_DB,
+      },
+      postgres: {
+        host: ENVS.POSTGRES_HOST,
+        port: ENVS.POSTGRES_PORT,
+        username: ENVS.POSTGRES_USERNAME,
+        password: ENVS.POSTGRES_PASSWORD,
+        dbName: ENVS.POSTGRES_DB_NAME,
       },
     },
   } as const;
