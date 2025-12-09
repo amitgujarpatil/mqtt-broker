@@ -1,0 +1,9 @@
+{
+  "apps": [
+    {
+      "name": "amy-mqtt-broker",
+      "script": "./dist/workers/broker/main.js",
+      "time": true
+    }
+  ]
+}

@@ -6,9 +6,9 @@ import RmqExchangeEnum from 'src/common/rmq/enum/rmq.exchange.enum';
 
 const config = (config: Record<string, unknown>) => {
   const ENVS = validationSchema.parse(config);
-  const NODE_ENV = process.env.NODE_ENV;
+  const NODE_ENV = ENVS.NODE_ENV;
   const APP_NAME = `broker-${NODE_ENV}`;
-  const PORT = 1813;
+  const PORT = ENVS.PORT;
 
   return {
     app: {
@@ -75,8 +75,8 @@ const config = (config: Record<string, unknown>) => {
             routingKey: RmqQueueEnum.DEVICE_COMMAND_SEND,
           },
         ],
-        createExchanges: true,
-        createQueues: true,
+        createExchanges: false,
+        createQueues: false,
         createBindings: true,
       } as IRMQConfigVariables,
     },

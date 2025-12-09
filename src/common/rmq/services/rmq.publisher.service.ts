@@ -1,9 +1,8 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { RabbitMQService } from './rabbitmq.service';
+import { RabbitMQService } from './rmq.service';
 import { ConfigService } from '@nestjs/config';
 import { ConfigVariablesType } from 'src/config';
 import RmqQueueEnum from '../enum/rmq.queue.enum';
-import { PublishOptions } from 'amqp-connection-manager/dist/types/ChannelWrapper';
 import RmqRoutingKeyEnum from '../enum/rmq.routing.key.enum';
 import RmqExchangeEnum from '../enum/rmq.exchange.enum';
 import { IRMQConfigVariables } from 'src/config/config.types';
@@ -12,11 +11,11 @@ import { IPublishOptions } from '../types/index.types';
 import { randomBytes } from 'crypto';
 
 @Injectable()
-export class RabbitMQPublisherService
+export class RMQPublisherService
   extends RabbitMQService
   implements OnModuleInit
 {
-  protected readonly _logger = new Logger(RabbitMQPublisherService.name);
+  protected readonly _logger = new Logger(RMQPublisherService.name);
   private _cfg: IRMQConfigVariables;
 
   constructor(
@@ -44,10 +43,11 @@ export class RabbitMQPublisherService
     // setup exchanges and queues
     await this.setupExchangesAndQueues(this._cfg);
 
-    await this.testPublishMessage();
+    // await this.testPublishMessage();
   }
 
   async testPublishMessage() {
+    console.log('Starting test message publishing...');
     let num = 0;
     const publishMessage = async () => {
       const msg = `Test message ${num++} at ${new Date().toISOString()}`;
@@ -75,11 +75,14 @@ export class RabbitMQPublisherService
         compressionAlgorithm: 'gzip',
         compressionLevel: 6,
       });
-      this._logger.log(`Command published to device.command.send: ${cmd}`);
+      const msg = { ...cmd, randomBytes: 1 };
+      console.log(
+        `Command published to device.command.send: ${JSON.stringify(msg)}`,
+      );
     };
 
     // publishDeviceCommand();
-    setInterval(publishDeviceCommand, 5000);
+    //setInterval(publishDeviceCommand, 10);
   }
 
   async publishToMessageReceiveQueue(

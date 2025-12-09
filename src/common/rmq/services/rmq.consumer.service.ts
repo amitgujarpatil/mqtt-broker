@@ -1,5 +1,5 @@
 import { ConfigVariablesType } from 'src/config';
-import { RabbitMQService } from './rabbitmq.service';
+import { RabbitMQService } from './rmq.service';
 import { ConfigService } from '@nestjs/config';
 import {
   Injectable,
@@ -21,11 +21,11 @@ import { IRMQListerners, RMQConsumerHandler } from '../types/index.types';
 const DEFAULT_PREFETCH_COUNT = 1;
 
 @Injectable()
-export class RabbitMQConsumerService
+export class RMQConsumerService
   extends RabbitMQService
   implements OnModuleInit, OnApplicationShutdown
 {
-  protected readonly _logger = new Logger(RabbitMQConsumerService.name);
+  protected readonly _logger = new Logger(RMQConsumerService.name);
   private _consumerChannels: Map<string, ChannelWrapper> = new Map();
   private _connection: IAmqpConnectionManager;
   private _listeners: IRMQListerners = {};
@@ -44,25 +44,6 @@ export class RabbitMQConsumerService
 
     this._connection = await this.createConnection(connectionName);
 
-    this.subscribe([
-      {
-        queue: RmqQueueEnum.DEVICE_COMMAND_SEND,
-        autoCommit: true,
-        prefetch: 1,
-        handler: async (msg, channel, fields) => {
-          console.log('Payload:', msg);
-          console.log('Routing Key:', fields);
-
-          // Acknowledge the message
-          // channel.ack(msg);
-          // deleay for testing nack
-          await new Promise((resolve) => setTimeout(resolve, 2000));
-          return true;
-        },
-      },
-    ]);
-
-    await this.startConsumer();
   }
 
   subscribe(handlers: Array<RMQConsumerHandler>) {

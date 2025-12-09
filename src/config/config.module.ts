@@ -1,7 +1,8 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { ConfigModule as CnfModule } from '@nestjs/config';
-import config from '../../config/index';
+import config from './index';
 
+@Global()
 @Module({
   imports: [
     CnfModule.forRoot({
