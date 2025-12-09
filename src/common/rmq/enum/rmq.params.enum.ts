@@ -5,4 +5,5 @@ export enum RMQParamType {
   FIELDS = 'fields',
   HEADERS = 'headers',
   PUBLISHER_SERVICE = 'publisher_service',
+  PUBLISHER_SERVICE_V2 = 'publisher_service_v2',
 }

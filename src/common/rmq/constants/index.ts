@@ -1,2 +1,4 @@
-export const RMQ_PARAM_METADATA = 'rmq:param_metadata';
-export const RMQ_CONSUMER_METADATA = 'rmq_consumer';
+export const RMQ_PARAM_METADATA = 'RMQ_PARAM_METADATA';
+export const RMQ_CONSUMER_METADATA = 'RMQ_CONSUMER_METADATA';
+export const RMQ_PUBLISHER_SERVICE = 'RMQ_PUBLISHER_SERVICE';
+export const RMQ_CONSUMER_SERVICE = 'RMQ_CONSUMER_SERVICE';

@@ -5,6 +5,7 @@ import { RMQ_CONSUMER_METADATA } from '../constants';
 import { RMQParamType } from '../enum/rmq.params.enum';
 import { RMQ_PARAM_METADATA } from '../constants';
 import { RMQConsumerHandler } from '../interfaces/index.interface';
+import { RMQPublisherService } from './rmq.publisher.service';
 
 @Injectable()
 export class RMQDiscoveryService implements OnModuleInit {
@@ -14,10 +15,12 @@ export class RMQDiscoveryService implements OnModuleInit {
     private readonly discoveryService: DiscoveryService,
     private readonly metadataScanner: MetadataScanner,
     private readonly rmqConsumerService: RMQConsumerService,
+    private readonly rmqPublisherService: RMQPublisherService,
   ) {}
 
   async onModuleInit() {
-    await this.discoverConsumers();
+    //  await this.discoverConsumers();
+    await this.discoverPublishers();
   }
 
   /*
@@ -61,7 +64,7 @@ export class RMQDiscoveryService implements OnModuleInit {
 
     if (consumers.length === 0) return;
 
-    await this.rmqConsumerService.initialize();
+    await this.rmqConsumerService.init();
 
     const handlers = consumers.map(
       ({ instance, methodName, options }) =>
@@ -125,5 +128,30 @@ export class RMQDiscoveryService implements OnModuleInit {
 
     await this.rmqConsumerService.subscribe(handlers);
     await this.rmqConsumerService.startConsumer();
+  }
+
+  async discoverPublishers() {
+    const publisherService = this.discoveryService
+      .getProviders()
+      .find(
+        (p) => p.instance instanceof (RMQPublisherService as any),
+      )?.instance;
+
+    if (
+      !publisherService ||
+      publisherService.constructor.name === 'RMQPublisherService'
+    ) {
+      this.logger.log('No RMQPublisherService found, skipping publisher init');
+      return;
+    }
+
+    try {
+      await this.rmqPublisherService.init();
+
+      this.logger.log('RMQ Publisher initialized successfully');
+    } catch (err) {
+      this.logger.error('Failed to initialize RMQ Publisher', err);
+      throw err;
+    }
   }
 }

@@ -40,7 +40,7 @@ export class RMQConsumerService
   /**
    * Initialize connection (called by discovery service)
    */
-  async initialize() {
+  async init() {
     if (this._isInitialized) {
       return;
     }
@@ -213,7 +213,7 @@ export class RMQConsumerService
    */
   async startConsumer() {
     if (!this._isInitialized) {
-      await this.initialize();
+      await this.init();
     }
 
     const queueCount = Object.keys(this._listeners).length;

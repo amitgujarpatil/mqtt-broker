@@ -11,10 +11,7 @@ import { IPublishOptions } from '../interfaces/index.interface';
 import { randomBytes } from 'crypto';
 
 @Injectable()
-export class RMQPublisherService
-  extends RabbitMQService
-  implements OnModuleInit
-{
+export class RMQPublisherService extends RabbitMQService {
   protected readonly _logger = new Logger(RMQPublisherService.name);
   private _cfg: IRMQConfigVariables;
 
@@ -28,7 +25,7 @@ export class RMQPublisherService
     });
   }
 
-  async onModuleInit() {
+  async init() {
     // setup channel pool for publisher
     await this.setupChannelPool({
       min: 3,
