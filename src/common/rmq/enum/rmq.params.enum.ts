@@ -4,4 +4,5 @@ export enum RMQParamType {
   CHANNEL = 'channel',
   FIELDS = 'fields',
   HEADERS = 'headers',
+  PUBLISHER_SERVICE = 'publisher_service',
 }

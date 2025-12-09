@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import { RMQParamType } from '../enum/rmq.params.enum';
 import { RMQ_PARAM_METADATA } from '../constants';
 
-function registerParam(
+export function registerParam(
   target: any,
   key: string,
   index: number,
@@ -37,4 +37,9 @@ export function RMQFields(data?: string) {
 export function RMQHeaders(data?: string) {
   return (target: any, key: string, index: number) =>
     registerParam(target, key, index, RMQParamType.HEADERS, data);
+}
+
+export function RMQPublisher() {
+  return (target: any, key: string, index: number) =>
+    registerParam(target, key, index, RMQParamType.PUBLISHER_SERVICE);
 }
