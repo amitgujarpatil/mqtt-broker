@@ -8,12 +8,12 @@ import { retrySafe } from '../../utils';
 import { createPool, Pool } from 'generic-pool';
 import { PublishOptions } from 'amqp-connection-manager/dist/types/ChannelWrapper';
 import {
-  ICreateChannelPoolOptions,
   IPublishOptions,
   ISetupExchangesAndQueuesConfig,
-} from '../types/index.types';
+} from '../interfaces/index.interface';
 import { IRMQConfigVariables } from 'src/config/config.types';
 import { CompressionService } from 'src/common/compression/compression.service';
+import { ICreateChannelPoolOptions } from '../types/index.type';
 /**
  * AMQP-CONNECTION-MANAGER BENEFITS:
  *
@@ -156,7 +156,6 @@ export class RabbitMQService implements OnModuleInit {
       this._logger.warn(`Channel '${channelName}' closed`);
     });
 
-    // Wait for initial connection
     await channel.waitForConnect();
     this._logger.log(`Channel '${channelName}' is ready`);
 
@@ -394,18 +393,6 @@ export class RabbitMQService implements OnModuleInit {
           algorithm: options?.compressionAlgorithm,
         },
       );
-
-      // console.log('compressionResult', compressionResult);
-
-      // decompress
-      // const decompressed = await this.compressionService.decompress(
-      //   compressionResult.data,
-      //   {
-      //     algorithm: 'gzip',
-      //   },
-      // );
-
-      //console.log('decompressed', decompressed.toString());
 
       // Prepare message headers with compression metadata
       const headers = {

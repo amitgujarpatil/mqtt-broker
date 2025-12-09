@@ -7,7 +7,7 @@ import RmqRoutingKeyEnum from '../enum/rmq.routing.key.enum';
 import RmqExchangeEnum from '../enum/rmq.exchange.enum';
 import { IRMQConfigVariables } from 'src/config/config.types';
 import { CompressionService } from 'src/common/compression/compression.service';
-import { IPublishOptions } from '../types/index.types';
+import { IPublishOptions } from '../interfaces/index.interface';
 import { randomBytes } from 'crypto';
 
 @Injectable()

@@ -1,13 +1,8 @@
 import { ConfigVariablesType } from 'src/config';
 import { RabbitMQService } from './rmq.service';
 import { ConfigService } from '@nestjs/config';
-import {
-  Injectable,
-  Logger,
-  OnApplicationShutdown,
-  OnModuleInit,
-} from '@nestjs/common';
-import RmqQueueEnum, { RmqQueueEnumType } from '../enum/rmq.queue.enum';
+import { Injectable, Logger, OnApplicationShutdown } from '@nestjs/common';
+import { RmqQueueEnumType } from '../enum/rmq.queue.enum';
 import {
   ConfirmChannel,
   MessageFields,
@@ -16,19 +11,24 @@ import {
 import { CompressionService } from 'src/common/compression/compression.service';
 import { ChannelWrapper } from 'amqp-connection-manager';
 import { IAmqpConnectionManager } from 'amqp-connection-manager/dist/types/AmqpConnectionManager';
-import { IRMQListerners, RMQConsumerHandler } from '../types/index.types';
+import {
+  IRMQListerners,
+  RMQConsumerHandler,
+} from '../interfaces/index.interface';
 
-const DEFAULT_PREFETCH_COUNT = 1;
+const DEFAULT_PREFETCH_COUNT =
+  parseInt(process.env.RMQ_PREFETCH_COUNT, 10) || 10;
 
 @Injectable()
 export class RMQConsumerService
   extends RabbitMQService
-  implements OnModuleInit, OnApplicationShutdown
+  implements OnApplicationShutdown
 {
   protected readonly _logger = new Logger(RMQConsumerService.name);
   private _consumerChannels: Map<string, ChannelWrapper> = new Map();
   private _connection: IAmqpConnectionManager;
   private _listeners: IRMQListerners = {};
+  private _isInitialized = false;
 
   constructor(
     configService: ConfigService<ConfigVariablesType>,
@@ -37,16 +37,28 @@ export class RMQConsumerService
     super(configService, compressionService);
   }
 
-  async onModuleInit() {
+  /**
+   * Initialize connection (called by discovery service)
+   */
+  async initialize() {
+    if (this._isInitialized) {
+      return;
+    }
+
     const connectionName = `${this.configService.get<string>('app.name', {
       infer: true,
     })}-consumer-connection`;
 
     this._connection = await this.createConnection(connectionName);
+    this._isInitialized = true;
 
+    this._logger.log('RMQ Consumer Service initialized');
   }
 
-  subscribe(handlers: Array<RMQConsumerHandler>) {
+  /**
+   * Subscribe to queues with handlers
+   */
+  async subscribe(handlers: Array<RMQConsumerHandler>) {
     handlers.forEach(({ queue, handler, prefetch, autoCommit }) => {
       const existing = this._listeners[queue];
       if (existing) {
@@ -62,16 +74,23 @@ export class RMQConsumerService
     });
   }
 
-  private async _processMessage(
-    queue: RmqQueueEnumType,
-    message: RMQConsumeMessage,
-    channel: ConfirmChannel,
-    fields: MessageFields,
-  ): Promise<void> {
+  private async _processMessage({
+    queue,
+    message,
+    rawMessage,
+    channel,
+    fields,
+  }: {
+    queue: RmqQueueEnumType;
+    message: Record<string, any>;
+    rawMessage: RMQConsumeMessage;
+    channel: ConfirmChannel;
+    fields: MessageFields;
+  }): Promise<void> {
     if (message) {
       const handlers = this._listeners[queue]?.handlers || [];
       const handlerPromises = handlers.map((handler) =>
-        handler(message, channel, fields),
+        handler(message, rawMessage, channel, fields),
       );
       await Promise.all(handlerPromises);
     }
@@ -112,6 +131,11 @@ export class RMQConsumerService
       });
 
       await Promise.all(channelClosePromises);
+
+      if (this._connection) {
+        await this._connection.close();
+      }
+
       this._logger.log('RabbitMQ consumers shut down successfully');
     } catch (error) {
       this._logger.error(`Error shutting down RabbitMQ consumers: ${error}`);
@@ -133,23 +157,31 @@ export class RMQConsumerService
           }
 
           try {
-            // Decompress the message content
             const decompressedContent = await this._decompressMessage(message);
 
-            // Parse the decompressed content
-            const parsedPayload = JSON.parse(
-              decompressedContent?.toString() || '{}',
-            )['data'];
+            let parsedPayload: Record<string, any>;
+            try {
+              parsedPayload = JSON.parse(
+                decompressedContent?.toString() || '{}',
+              );
 
-            // Now handlers receive the complete message with all RabbitMQ properties
-            await this._processMessage(
-              listener.queue,
-              parsedPayload,
-              chan,
-              message.fields,
-            );
+              if (parsedPayload.data !== undefined) {
+                parsedPayload = parsedPayload.data;
+              }
+            } catch (parseError) {
+              this._logger.error('Failed to parse message', parseError);
+              parsedPayload = {};
+            }
 
-            // Acknowledge the message if autoCommit is enabled
+            // Process the message with all handlers
+            await this._processMessage({
+              queue: listener.queue,
+              message: parsedPayload,
+              rawMessage: message,
+              channel: chan,
+              fields: message?.fields,
+            });
+
             if (listener.autoCommit !== false) {
               chan.ack(message);
             }
@@ -159,15 +191,13 @@ export class RMQConsumerService
               error.stack,
             );
 
-            // Reject message if autoCommit is enabled
             if (listener.autoCommit !== false) {
-              // Don't requeue (false) - will go to DLQ if configured
               chan.nack(message, false, false);
             }
           }
         },
         {
-          noAck: !(listener.autoCommit === true),
+          noAck: listener.autoCommit === true,
           consumerTag: `${listener.queue}-consumer-${Date.now()}`,
         },
       );
@@ -178,7 +208,23 @@ export class RMQConsumerService
     };
   }
 
+  /**
+   * Start consumer for all registered queues
+   */
   async startConsumer() {
+    if (!this._isInitialized) {
+      await this.initialize();
+    }
+
+    const queueCount = Object.keys(this._listeners).length;
+
+    if (queueCount === 0) {
+      this._logger.warn('No consumers registered. Skipping startConsumer()');
+      return;
+    }
+
+    this._logger.log(`Starting ${queueCount} consumer(s)...`);
+
     const channelPromises = Object.entries(this._listeners).map(
       async ([queueName, listener]) => {
         const channel = await this.createChannel(this._connection, {
@@ -187,13 +233,12 @@ export class RMQConsumerService
           setupFn: this._setupConsumerFunction(listener),
         });
 
-        // Store channel reference for shutdown
         this._consumerChannels.set(queueName, channel);
       },
     );
 
     await Promise.all(channelPromises);
-    this._logger.log('All consumers started successfully');
+    this._logger.log(`All ${queueCount} consumer(s) started successfully`);
   }
 
   async onApplicationShutdown(signal?: string) {

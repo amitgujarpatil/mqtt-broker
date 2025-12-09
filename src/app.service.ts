@@ -10,16 +10,9 @@ export class AppService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    // You can use the RMQPublisherService here if needed
-    await this.rmqPublisherService.testPublishMessage();
-
-    // try {
-    //   console.log('AppService initialized successfully.');
-    // } catch (error) {
-    //   console.error('Error during AppService initialization:', error);
-    // }
+    // You can add initialization logic here if needed
+    console.log('AppService initialized');
   }
-
   getHello(): string {
     return 'Hello World!';
   }

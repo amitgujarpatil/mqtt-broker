@@ -6,16 +6,6 @@ import {
 } from 'amqplib';
 import { RmqQueueEnumType } from '../enum/rmq.queue.enum';
 
-export type ICreateChannelPoolOptions = {
-  min?: number;
-  max?: number;
-  connectionName?: string;
-  channelOptions?: {
-    channelName?: string;
-    confirmChannel?: boolean;
-  };
-};
-
 export interface ISetupExchangesAndQueuesConfig {
   createExchanges: boolean;
   createQueues: boolean;
@@ -45,7 +35,8 @@ export interface IPublishOptions extends amqpOptions.Publish {
 export interface RMQConsumerHandler {
   queue: RmqQueueEnumType;
   handler: (
-    message: RMQConsumeMessage | null,
+    message: Record<string, any>,
+    rawMessage: RMQConsumeMessage,
     channel: ConfirmChannel,
     fields: MessageFields,
   ) => Promise<Boolean | void>;
@@ -60,4 +51,11 @@ export interface IRMQListerners {
     autoCommit?: boolean;
     handlers: Array<RMQConsumerHandler['handler']>;
   };
+}
+
+export interface RMQConsumerOptions {
+  queue: RmqQueueEnumType;
+  prefetch?: number;
+  autoCommit?: boolean;
+  priority?: number;
 }

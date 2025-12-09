@@ -1,4 +1,4 @@
-import { ISetupExchangesAndQueuesConfig } from 'src/common/rmq/types/index.types';
+import { ISetupExchangesAndQueuesConfig } from 'src/common/rmq/interfaces/index.interface';
 
 export interface IRMQConfigVariables extends ISetupExchangesAndQueuesConfig {
   connectionOptions: {

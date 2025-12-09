@@ -1,14 +1,5 @@
-import { SetMetadata } from '@nestjs/common';
-import { RmqQueueEnumType } from '../enum/rmq.queue.enum';
-
-export const RMQ_CONSUMER_METADATA = 'rmq:consumer';
-
-export interface RMQConsumerOptions {
-  queue: RmqQueueEnumType;
-  prefetch?: number;
-  autoCommit?: boolean;
-  priority?: number;
-}
+import { RMQ_CONSUMER_METADATA } from '../constants';
+import { RMQConsumerOptions } from '../interfaces/index.interface';
 
 /**
  * RabbitMQ Consumer Decorator
@@ -29,24 +20,7 @@ export interface RMQConsumerOptions {
  */
 export function RMQConsumer(options: RMQConsumerOptions) {
   return (target: any, propertyKey: string, descriptor: PropertyDescriptor) => {
-    // Store metadata about this consumer
-    SetMetadata(RMQ_CONSUMER_METADATA, options)(
-      target,
-      propertyKey,
-      descriptor,
-    );
-
-    // Store in a global registry for the class
-    if (!Reflect.hasMetadata('rmq:consumers', target.constructor)) {
-      Reflect.defineMetadata('rmq:consumers', [], target.constructor);
-    }
-
-    const consumers = Reflect.getMetadata('rmq:consumers', target.constructor);
-    consumers.push({
-      methodName: propertyKey,
-      options,
-    });
-
+    Reflect.defineMetadata(RMQ_CONSUMER_METADATA, options, target, propertyKey);
     return descriptor;
   };
 }

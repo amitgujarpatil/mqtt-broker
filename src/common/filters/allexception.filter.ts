@@ -16,6 +16,9 @@ export class AllExceptionsFilter extends BaseExceptionFilter {
       //   return this.catchGraphql(exception, host);
       case 'http':
         return this.catchHttp(exception, host);
+
+      default:
+        return super.catch(exception, host);  
     }
   }
 

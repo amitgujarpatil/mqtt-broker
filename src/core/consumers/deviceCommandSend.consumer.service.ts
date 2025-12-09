@@ -1,57 +1,40 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ConfirmChannel, ConsumeMessage } from 'amqplib';
 import { RMQConsumer } from 'src/common/rmq/decorators/rmq.consumer.decorator';
 import {
   RMQChannel,
+  RMQRawMessage,
   RMQMessage,
-  RMQPayload,
-} from 'src/common/rmq/decorators/rmq.payload.decorator';
+} from 'src/common/rmq/decorators/rmq.params.decorator';
 import RmqQueueEnum from 'src/common/rmq/enum/rmq.queue.enum';
 import { RMQConsumerService } from 'src/common/rmq/services/rmq.consumer.service';
 
 @Injectable()
-export class DeviceCommandSendConsumerService implements OnModuleInit {
+export class DeviceCommandSendConsumerService {
   constructor(
     private readonly configService: ConfigService,
     private readonly consumerService: RMQConsumerService,
   ) {}
 
-  async onModuleInit() {
-    // this.consumerService.subscribe([
-    //   {
-    //     queue: RmqQueueEnum.DEVICE_COMMAND_SEND,
-    //     autoCommit: true,
-    //     prefetch: 1,
-    //     handler: async (msg, channel, fields) => {
-    //       console.log('Payload:', msg);
-    //       console.log('Routing Key:', fields);
-    //       // Acknowledge the message
-    //       // channel.ack(msg);
-    //       // deleay for testing nack
-    //       await new Promise((resolve) => setTimeout(resolve, 2000));
-    //       return true;
-    //     },
-    //   },
-    // ]);
-    // await this.consumerService.startConsumer();
-  }
-
   @RMQConsumer({
     queue: RmqQueueEnum.DEVICE_COMMAND_SEND,
-    prefetch: 1,
+    prefetch: 10,
     autoCommit: false,
   })
   async handleDeviceCommand(
-    @RMQPayload() payload: any,
-    @RMQMessage() message: ConsumeMessage,
+    @RMQMessage() message: Record<string, any>,
+    @RMQRawMessage() rawMessage: ConsumeMessage,
     @RMQChannel() channel: ConfirmChannel,
   ) {
-    console.log('Device command received:', payload);
-    console.log('Delivery tag:', message.fields.deliveryTag);
+    delete message.randomBytes;
+    console.log('Device command 1 received:', message);
+    // console.log('Delivery tag:', rawMessage);
 
     // Process command
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    //  await channel.ack(rawMessage);
 
     // Auto-commit is enabled, so no need to ack manually
   }
