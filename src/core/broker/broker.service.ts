@@ -1,14 +1,15 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { RMQPublisherService } from 'src/common/rmq/decorators/rmq.services.decorator';
-
+import { RMQPublisherSvc } from 'src/common/rmq/decorators/rmq.services.decorator';
+import { RMQPublisherService } from 'src/common/rmq/services/rmq.publisher.service';
 import { ConfigVariablesType } from 'src/config';
 
 @Injectable()
 export class BrokerService implements OnModuleInit {
   constructor(
     private readonly configService: ConfigService<ConfigVariablesType>,
-    //  @RMQPublisherService() private readonly rmqPublisher: any,
+    @RMQPublisherSvc()
+    private readonly rmqPublisherService: RMQPublisherService,
   ) {
     configService.get('app');
   }

@@ -1,7 +1,11 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { DiscoveryService, MetadataScanner } from '@nestjs/core';
 import { RMQConsumerService } from './rmq.consumer.service';
-import { RMQ_CONSUMER_METADATA } from '../constants';
+import {
+  RMQ_CONSUMER_METADATA,
+  RMQ_PUBLISHER_SERVICE,
+  RMQ_PUBLISHER_SERVICE_METADATA,
+} from '../constants';
 import { RMQParamType } from '../enum/rmq.params.enum';
 import { RMQ_PARAM_METADATA } from '../constants';
 import { RMQConsumerHandler } from '../interfaces/index.interface';
@@ -19,7 +23,7 @@ export class RMQDiscoveryService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    //  await this.discoverConsumers();
+    // await this.discoverConsumers();
     await this.discoverPublishers();
   }
 
@@ -131,27 +135,38 @@ export class RMQDiscoveryService implements OnModuleInit {
   }
 
   async discoverPublishers() {
-    const publisherService = this.discoveryService
-      .getProviders()
-      .find(
-        (p) => p.instance instanceof (RMQPublisherService as any),
-      )?.instance;
+    const instances = [
+      ...this.discoveryService.getProviders(),
+      ...this.discoveryService.getControllers(),
+    ];
 
-    if (
-      !publisherService ||
-      publisherService.constructor.name === 'RMQPublisherService'
-    ) {
-      this.logger.log('No RMQPublisherService found, skipping publisher init');
+    let publisherUsed = false;
+
+    for (const { instance } of instances) {
+      if (!instance) continue;
+
+      const hasPublisherMeta = Reflect.getMetadata(
+        RMQ_PUBLISHER_SERVICE_METADATA,
+        instance.constructor,
+      );
+
+      if (hasPublisherMeta) {
+        publisherUsed = true;
+        break;
+      }
+    }
+
+    if (!publisherUsed) {
+      this.logger.log(
+        'No @RMQPublisherService() usage found — skipping publisher init',
+      );
       return;
     }
 
-    try {
-      await this.rmqPublisherService.init();
-
-      this.logger.log('RMQ Publisher initialized successfully');
-    } catch (err) {
-      this.logger.error('Failed to initialize RMQ Publisher', err);
-      throw err;
-    }
+    this.logger.log(
+      'Publisher needed — initializing RMQ publisher connection...',
+    );
+    await this.rmqPublisherService.init();
+    this.logger.log('Publisher ready ✓');
   }
 }

@@ -1,5 +1,34 @@
 import { Inject } from '@nestjs/common';
-import { RMQ_CONSUMER_SERVICE, RMQ_PUBLISHER_SERVICE } from '../constants';
+import {
+  RMQ_PUBLISHER_SERVICE,
+  RMQ_CONSUMER_SERVICE,
+  RMQ_PUBLISHER_SERVICE_METADATA,
+  RMQ_CONSUMER_SERVICE_METADATA,
+} from '../constants';
 
-export const RMQPublisherService = () => Inject(RMQ_PUBLISHER_SERVICE);
-export const RMQConsumerService = () => Inject(RMQ_CONSUMER_SERVICE);
+export function RMQPublisherSvc() {
+  return function (
+    target: any,
+    propertyKey: string | symbol,
+    parameterIndex: number,
+  ) {
+    Reflect.defineMetadata(RMQ_PUBLISHER_SERVICE_METADATA, true, target);
+    Inject(RMQ_PUBLISHER_SERVICE)(target, propertyKey, parameterIndex);
+  };
+}
+
+export function RMQConsumerService() {
+  return function (
+    target: any,
+    propertyKey: string | symbol,
+    parameterIndex: number,
+  ) {
+    Reflect.defineMetadata(
+      RMQ_CONSUMER_SERVICE_METADATA,
+      true,
+      target.constructor,
+    );
+
+    Inject(RMQ_CONSUMER_SERVICE)(target, propertyKey, parameterIndex);
+  };
+}
