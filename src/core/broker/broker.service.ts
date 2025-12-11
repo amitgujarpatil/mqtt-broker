@@ -1,7 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { RMQPublisherSvc } from 'src/common/rmq/decorators/rmq.services.decorator';
-import { RMQPublisherService } from 'src/common/rmq/services/rmq.publisher.service';
+import { RMQPublisherSvc } from 'src/common/rmq/decorator/rmq.services.decorator';
+import { RMQPublisherService } from 'src/common/rmq/service/rmq.publisher.service';
 import { ConfigVariablesType } from 'src/config';
 
 @Injectable()

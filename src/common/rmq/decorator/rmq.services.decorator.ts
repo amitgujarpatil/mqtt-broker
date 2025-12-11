@@ -4,7 +4,7 @@ import {
   RMQ_CONSUMER_SERVICE,
   RMQ_PUBLISHER_SERVICE_METADATA,
   RMQ_CONSUMER_SERVICE_METADATA,
-} from '../constants';
+} from '../constant';
 
 export function RMQPublisherSvc() {
   return function (

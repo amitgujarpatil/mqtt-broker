@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { RMQParamType } from '../enum/rmq.params.enum';
-import { RMQ_PARAM_METADATA } from '../constants';
+import { RMQ_PARAM_METADATA } from '../constant';
 
 export function registerParam(
   target: any,

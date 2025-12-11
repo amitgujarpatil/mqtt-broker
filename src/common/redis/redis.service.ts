@@ -1,38 +1,88 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { RedisClientType, createClient } from 'redis';
 import { ConfigVariablesType } from '../../config';
 
+type RedisClientConfig = ConfigVariablesType['db']['redis'];
+
 @Injectable()
-export class RedisService {
+export class RedisService implements OnModuleInit {
   private _logger = new Logger(RedisService.name);
 
   private _client: RedisClientType;
-  private _cfg: ConfigVariablesType['db']['redis'];
+  private _cfg: RedisClientConfig;
 
-  constructor(readonly configService: ConfigService) {
-     this.connect();
+  constructor(readonly configService: ConfigService) {   
+  }
+  async onModuleInit() {
+    await this.connect();
   }
 
-  async connect(){
-      this._cfg = this.configService.get('db.redis');
-      this._client = createClient(this._cfg);
-      this._client.on('connect', this.handleConnect);
-      this._client.on('disconnect', this.handleDisconnect);
-      this._client.on('error', this.handleError);
+  async connect() {
+    this._cfg = this.configService.get('db.redis');
+    this._client = this.createNewClient(this._cfg);
 
-      this._addRedisMethods();
+    this._addRedisMethods();
 
-      await this._client.connect();
+    await this._client.connect();
   }
 
   getClient(): RedisClientType {
     return this._client;
   }
 
+  private createNewClient(config: RedisClientConfig): RedisClientType {
+    const newClient = createClient(config);
+
+    newClient.on('connect', () => {
+      this._logger.log('REDIS CONNECTED :)');
+    });
+
+    newClient.on('disconnect', () => {
+      this._logger.log('REDIS DISCONNECTED :(');
+    });
+
+    newClient.on('error', (e: unknown) => {
+      console.log(e);
+      this._logger.log('REDIS ERROR :O', e);
+    });
+
+    return newClient as RedisClientType;
+  }
+
   // TODO - add more methods here instead of creating them in the service
   private _addRedisMethods() {
-    const methods = ['sadd', 'srem', 'sismember', 'del'] as const;
+    const methods = [
+      'sadd',
+      'srem',
+      'sismember',
+      'del',
+      'scanKeys',
+      'get',
+      'set',
+      'hget',
+      'hset',
+      'hdel',
+      'incr',
+      'decr',
+      'expire',
+      'ttl',
+      'lpush',
+      'rpush',
+      'lpop',
+      'rpop',
+      'lrange',
+      'llen',
+      'exists',
+      'flushAll',
+      'flushDb',
+      'INCR',
+      'DECR',
+      'HMSET',
+      'HGETALL',
+      'hSet',
+      'hGet',
+    ] as const;
     methods.forEach((method) => {
       (this as any)[method] = (...args: unknown[]) => {
         return new Promise((resolve, reject) => {
@@ -48,97 +98,29 @@ export class RedisService {
     });
   }
 
-  private handleConnect = () => {
-    this._logger.log('REDIS CONNECTED :)');
-  };
-
-  private handleDisconnect = () => {
-    this._logger.log('REDIS DISCONNECTED :(');
-  };
-
-  private handleError = (e: unknown) => {
-    console.log(e)
-    this._logger.log('REDIS ERROR :O', e);
-  };
-
-  async scanKeys(PATTERN: string): Promise<string[]> {
+  async scanKeys(PATTERN: string) {
     const redisClient = this._client;
     let _cursor = '0';
     let keyList = [];
-    return new Promise(async (resolve, reject) => {
-      (async function scanRecursive(pattern) {
-        try{
-          const {cursor,keys}  = await redisClient.scan(_cursor,{
-            COUNT:250,
-            MATCH:pattern,
-          })
+    (async function scanRecursive(pattern) {
+      try {
+        const { cursor, keys } = await redisClient.scan(_cursor, {
+          COUNT: 250,
+          MATCH: pattern,
+        });
 
-          keyList.push(...keys);
-          _cursor = cursor;
+        keyList.push(...keys);
+        _cursor = cursor;
 
-          if (cursor === '0') {
-            return resolve([...new Set(keyList)]);
-          }
-          
-          return scanRecursive(pattern);
-        }catch(e){
-            return reject(e);
+        if (cursor === '0') {
+          return [...new Set(keyList)];
         }
-      })(PATTERN);
-    });
-  }
 
-  async exists(key) {
-    return this._client.exists(key);
-  }
-
-  async get(key: string) {
-    return this._client.get(key);
-  }
-
-  async incr(key: string) {
-    return this._client.incr(key);
-  }
-
-  async decr(key: string) {
-    return this._client.decr(key);
-  }
-
-  async set(key: string, value: string, ttl?: number) {
-    return ttl
-      ? this._client.setEx(key, ttl, value)
-      : this._client.set(key, value);
-  }
-
-  async getKeys(pattern: string) {
-    return this._client.keys(pattern);
-  }
-
-  async deleteCache(keys: string[]) {
-    return this.del(keys);
-  }
-
-  async hGet(key: string, field: string) {
-    return this._client.hGet(key, field);
-  }
-
-  async hGetAll(key: string) {
-    return this._client.hGetAll(key);
-  }
-
-  async hSet(key: string, field: string, value: string | number) {
-    return this._client.hSet(key, field, value);
-  }
-
-  async hIncrBy(key: string, field: string, value: number) {
-    return this._client.hIncrBy(key, field, value);
-  }
-
-  async zAdd(key: string, score: number, member: string): Promise<boolean> {
-    return !!(this._client.zAdd(key, {
-        score,
-        value:member
-      }));
+        return scanRecursive(pattern);
+      } catch (e) {
+        throw e;
+      }
+    })(PATTERN);
   }
 }
 
@@ -148,4 +130,22 @@ export interface RedisService {
   srem: (key: string, value: string) => Promise<number>;
   sismember: (key: string, value: string) => Promise<number>;
   del: (keys: string[]) => Promise<number>;
+  get: (key: string) => Promise<string | null>;
+  set: (key: string, value: string) => Promise<'OK'>;
+  hget: (key: string, field: string) => Promise<string | null>;
+  hset: (key: string, field: string, value: string) => Promise<number>;
+  hdel: (key: string, field: string) => Promise<number>;
+  incr: (key: string) => Promise<number>;
+  decr: (key: string) => Promise<number>;
+  expire: (key: string, seconds: number) => Promise<number>;
+  ttl: (key: string) => Promise<number>;
+  lpush: (key: string, value: string | string[]) => Promise<number>;
+  rpush: (key: string, value: string | string[]) => Promise<number>;
+  lpop: (key: string) => Promise<string | null>;
+  rpop: (key: string) => Promise<string | null>;
+  lrange: (key: string, start: number, stop: number) => Promise<string[]>;
+  llen: (key: string) => Promise<number>;
+  exists: (key: string) => Promise<number>;
+  flushAll: () => Promise<'OK'>;
+  flushDb: () => Promise<'OK'>;
 }

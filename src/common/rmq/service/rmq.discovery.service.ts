@@ -5,11 +5,14 @@ import {
   RMQ_CONSUMER_METADATA,
   RMQ_PUBLISHER_SERVICE,
   RMQ_PUBLISHER_SERVICE_METADATA,
-} from '../constants';
+} from '../constant';
 import { RMQParamType } from '../enum/rmq.params.enum';
-import { RMQ_PARAM_METADATA } from '../constants';
-import { RMQConsumerHandler } from '../interfaces/index.interface';
+import { RMQ_PARAM_METADATA } from '../constant';
+import { RMQConsumerHandler } from '../interface/index.interface';
 import { RMQPublisherService } from './rmq.publisher.service';
+import { IRMQConfigVariables } from 'workers/broker/config/config.types';
+import { ConfigVariablesType } from 'workers/broker/config';
+import { ConfigService } from '@nestjs/config/dist/config.service';
 
 @Injectable()
 export class RMQDiscoveryService implements OnModuleInit {
@@ -20,10 +23,21 @@ export class RMQDiscoveryService implements OnModuleInit {
     private readonly metadataScanner: MetadataScanner,
     private readonly rmqConsumerService: RMQConsumerService,
     private readonly rmqPublisherService: RMQPublisherService,
+    private readonly configService: ConfigService<ConfigVariablesType>,
   ) {}
 
   async onModuleInit() {
-    // await this.discoverConsumers();
+    if(process.env.ENABLE_RMQ_BROKER !== 'true'){
+      this.logger.log('RMQ Broker is disabled via ENABLE_RMQ_BROKER env variable.');
+      return;
+    }
+    
+    await this.rmqConsumerService.setupExchangesAndQueues(
+      this.configService.get<IRMQConfigVariables>('broker.rmq', {
+        infer: true,
+      }),
+    );
+    await this.discoverConsumers();
     await this.discoverPublishers();
   }
 

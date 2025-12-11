@@ -29,7 +29,7 @@ async function bootstrap() {
     new AllExceptionsFilter(app.get(HttpAdapterHost).httpAdapter),
   );
 
-  await app.listen(cfg.app.port);
+ // await app.listen(cfg.app.port);
   Logger.log(`Server started at port ${cfg.app.port}`);
 }
 bootstrap();

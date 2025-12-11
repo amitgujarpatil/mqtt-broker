@@ -6,9 +6,14 @@ import { BrokerModule } from './core/broker/broker.module';
 import { ConfigModule } from './config/config.module';
 import { DeviceCommandSendConsumerService } from './core/consumers/deviceCommandSend.consumer.service';
 
+
 @Module({
-  imports: [ConfigModule, CommonModule, BrokerModule],
+  imports: [
+    ConfigModule, CommonModule, BrokerModule,
+  ],
   controllers: [AppController],
-  providers: [AppService, DeviceCommandSendConsumerService],
+  providers: [
+    AppService, 
+    DeviceCommandSendConsumerService],
 })
 export class AppModule {}

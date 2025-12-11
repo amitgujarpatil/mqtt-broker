@@ -1,4 +1,4 @@
-import { IRMQConfigVariables } from './config.types';
+import { IRMQConfigVariables, MqttBrokerConfig } from './config.types';
 import validationSchema from './config.validations';
 import RmqRoutingKeyEnum from 'src/common/rmq/enum/rmq.routing.key.enum';
 import RmqQueueEnum from 'src/common/rmq/enum/rmq.queue.enum';
@@ -6,9 +6,9 @@ import RmqExchangeEnum from 'src/common/rmq/enum/rmq.exchange.enum';
 
 const config = (config: Record<string, unknown>) => {
   const ENVS = validationSchema.parse(config);
-  const NODE_ENV = process.env.NODE_ENV;
+  const NODE_ENV = ENVS.NODE_ENV;
   const APP_NAME = `broker-${NODE_ENV}`;
-  const PORT = 1813;
+  const PORT = ENVS.PORT;
 
   return {
     app: {
@@ -16,7 +16,7 @@ const config = (config: Record<string, unknown>) => {
       port: PORT,
       env: NODE_ENV,
     },
-    broker: {
+    brokers: {
       rmq: {
         connectionOptions: {
           url: ENVS.RMQ_URL,
@@ -43,6 +43,11 @@ const config = (config: Record<string, unknown>) => {
             type: 'topic',
             options: { durable: true },
           },
+          {
+            name: RmqExchangeEnum.DEVICE_COMMAND_BROADCAST,
+            type: 'fanout',
+            options: { durable: true },
+          },
         ],
         queues: [
           {
@@ -59,6 +64,11 @@ const config = (config: Record<string, unknown>) => {
           },
         ],
         bindings: [
+          {
+            queue: RmqQueueEnum.DEVICE_COMMAND_SEND,
+            exchange: RmqExchangeEnum.DEVICE_COMMAND_BROADCAST,
+            routingKey: '',
+          },
           {
             queue: RmqQueueEnum.DEVICE_MESSAGE_RECEIVE,
             exchange: RmqExchangeEnum.DEVICE_MESSAGE_RECEIVE,
@@ -79,6 +89,10 @@ const config = (config: Record<string, unknown>) => {
         createQueues: true,
         createBindings: true,
       } as IRMQConfigVariables,
+      aedes:{
+        port: ENVS.MQTT_PORT || 1883,
+        enableTls: ENVS.MQTT_ENABLE_TLS || false,
+      } as MqttBrokerConfig
     },
     compression: {
       enabled: true,

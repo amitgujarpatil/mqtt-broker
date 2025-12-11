@@ -1,4 +1,4 @@
-import { ISetupExchangesAndQueuesConfig } from 'src/common/rmq/interfaces/index.interface';
+import { ISetupExchangesAndQueuesConfig } from 'src/common/rmq/interface/index.interface';
 
 export interface IRMQConfigVariables extends ISetupExchangesAndQueuesConfig {
   connectionOptions: {
@@ -10,4 +10,9 @@ export interface IRMQConfigVariables extends ISetupExchangesAndQueuesConfig {
       keepAliveDelay: number;
     };
   };
+}
+
+export interface MqttBrokerConfig {
+  port: number;
+  enableTls: boolean;
 }

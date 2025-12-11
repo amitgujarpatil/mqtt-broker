@@ -43,6 +43,11 @@ const config = (config: Record<string, unknown>) => {
             type: 'topic',
             options: { durable: true },
           },
+          {
+            name: RmqExchangeEnum.DEVICE_COMMAND_BROADCAST,
+            type: 'fanout',
+            options: { durable: true },
+          },
         ],
         queues: [
           {
@@ -60,6 +65,11 @@ const config = (config: Record<string, unknown>) => {
         ],
         bindings: [
           {
+            queue: RmqQueueEnum.DEVICE_COMMAND_SEND,
+            exchange: RmqExchangeEnum.DEVICE_COMMAND_BROADCAST,
+            routingKey: '',
+          },
+          {
             queue: RmqQueueEnum.DEVICE_MESSAGE_RECEIVE,
             exchange: RmqExchangeEnum.DEVICE_MESSAGE_RECEIVE,
             routingKey: RmqRoutingKeyEnum.DEVICE_MESSAGE_RECEIVE,
@@ -75,8 +85,8 @@ const config = (config: Record<string, unknown>) => {
             routingKey: RmqQueueEnum.DEVICE_COMMAND_SEND,
           },
         ],
-        createExchanges: false,
-        createQueues: false,
+        createExchanges: true,
+        createQueues: true,
         createBindings: true,
       } as IRMQConfigVariables,
     },

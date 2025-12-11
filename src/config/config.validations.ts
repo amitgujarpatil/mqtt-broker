@@ -27,6 +27,10 @@ const schema = z.object({
   RMQ_PASSWORD: z.string(),
   RMQ_HEARTBEAT: zodNumber.optional(),
   RMQ_QUEUE_DEVICE_COMMAND_SEND: z.string(),
+
+  // mqtt
+  MQTT_PORT: zodNumber.optional(),
+  MQTT_ENABLE_TLS: z.boolean().optional(),
 });
 
 export default schema;

@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ConfirmChannel, ConsumeMessage } from 'amqplib';
-import { RMQConsumer } from 'src/common/rmq/decorators/rmq.consumer.decorator';
+import { RMQConsumer } from 'src/common/rmq/decorator/rmq.consumer.decorator';
 import {
   RMQChannel,
   RMQRawMessage,
   RMQMessage,
-} from 'src/common/rmq/decorators/rmq.params.decorator';
+} from 'src/common/rmq/decorator/rmq.params.decorator';
 import RmqQueueEnum from 'src/common/rmq/enum/rmq.queue.enum';
-import { RMQConsumerService } from 'src/common/rmq/services/rmq.consumer.service';
+import { RMQConsumerService } from 'src/common/rmq/service/rmq.consumer.service';
 
 @Injectable()
 export class DeviceCommandSendConsumerService {

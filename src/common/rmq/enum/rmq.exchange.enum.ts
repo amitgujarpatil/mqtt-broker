@@ -19,6 +19,7 @@ const RmqExchangeEnum = {
   DEVICE_COMMAND_SEND: `${ENV}.device.command.send`,
   DEVICE_MESSAGE_RECEIVE: `${ENV}.device.message.receive`,
   DEVICE_HANDSHAKE: `${ENV}.device.handshake`,
+  DEVICE_COMMAND_BROADCAST: `${ENV}.device.command.broadcast`,
 } as const;
 
 export type RmqExchangeEnumType =

@@ -14,7 +14,7 @@ import { IAmqpConnectionManager } from 'amqp-connection-manager/dist/types/AmqpC
 import {
   IRMQListerners,
   RMQConsumerHandler,
-} from '../interfaces/index.interface';
+} from '../interface/index.interface';
 
 const DEFAULT_PREFETCH_COUNT =
   parseInt(process.env.RMQ_PREFETCH_COUNT, 10) || 10;

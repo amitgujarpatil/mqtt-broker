@@ -1,5 +1,5 @@
-import { RMQ_CONSUMER_METADATA } from '../constants';
-import { RMQConsumerOptions } from '../interfaces/index.interface';
+import { RMQ_CONSUMER_METADATA } from '../constant';
+import { RMQConsumerOptions } from '../interface/index.interface';
 
 /**
  * RabbitMQ Consumer Decorator

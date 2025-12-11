@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { RMQPublisherService } from './common/rmq/services/rmq.publisher.service';
+import { RMQPublisherService } from './common/rmq/service/rmq.publisher.service';
 
 @Injectable()
 export class AppService implements OnModuleInit {
@@ -13,6 +13,7 @@ export class AppService implements OnModuleInit {
     // You can add initialization logic here if needed
     console.log('AppService initialized');
   }
+
   getHello(): string {
     return 'Hello World!';
   }

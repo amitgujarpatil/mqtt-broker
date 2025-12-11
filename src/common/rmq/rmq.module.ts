@@ -1,12 +1,11 @@
-import { Global, Module } from '@nestjs/common';
-import { RMQPublisherService } from './services/rmq.publisher.service';
-import { RMQConsumerService } from './services/rmq.consumer.service';
+import {  Module } from '@nestjs/common';
+import { RMQPublisherService } from './service/rmq.publisher.service';
+import { RMQConsumerService } from './service/rmq.consumer.service';
 import { CompressionModule } from '../compression/compression.module';
 import { DiscoveryModule, ExternalContextCreator } from '@nestjs/core';
-import { RMQDiscoveryService } from './services/rmq.discovery.service';
-import { RMQ_CONSUMER_SERVICE, RMQ_PUBLISHER_SERVICE } from './constants';
+import { RMQDiscoveryService } from './service/rmq.discovery.service';
+import { RMQ_CONSUMER_SERVICE, RMQ_PUBLISHER_SERVICE } from './constant';
 
-@Global()
 @Module({
   imports: [CompressionModule, DiscoveryModule],
   exports: [

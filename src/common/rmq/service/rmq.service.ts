@@ -10,10 +10,10 @@ import { PublishOptions } from 'amqp-connection-manager/dist/types/ChannelWrappe
 import {
   IPublishOptions,
   ISetupExchangesAndQueuesConfig,
-} from '../interfaces/index.interface';
+} from '../interface/index.interface';
 import { IRMQConfigVariables } from 'src/config/config.types';
 import { CompressionService } from 'src/common/compression/compression.service';
-import { ICreateChannelPoolOptions } from '../types/index.type';
+import { ICreateChannelPoolOptions } from '../type/index.type';
 /**
  * AMQP-CONNECTION-MANAGER BENEFITS:
  *
