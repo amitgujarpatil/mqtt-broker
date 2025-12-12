@@ -7,7 +7,7 @@ import { MqttBrokerModule } from './mqtt.broker.module';
     MqttBrokerModule.forRootAsync({
       useFactory: (configService: ConfigService) => ({
         broker: {
-          port: configService.get('brokers.mqtt.port'),
+          port: configService.get('brokers.aedes.port'),
           host: configService.get('MQTT_HOST'),
         },
       }),

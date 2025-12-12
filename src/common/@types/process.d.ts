@@ -9,3 +9,4 @@ declare global {
     interface ProcessEnv extends z.infer<typeof schema> {}
   }
 }
+

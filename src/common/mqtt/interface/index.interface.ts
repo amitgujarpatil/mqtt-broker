@@ -1,4 +1,11 @@
-import { AedesOptions, AuthenticateHandler, AuthorizePublishHandler, AuthorizeSubscribeHandler } from "aedes";
+import { AedesOptions,  AuthenticateHandler, AuthorizePublishHandler, AuthorizeSubscribeHandler, Client,SubscribePacket, ConnectPacket, PublishPacket, Subscription } from "aedes";
+
+// masked export to avoid circular dependencies
+export interface MQTTClient extends Client {}
+export interface MQTTPublishPacket extends PublishPacket {}
+export interface MQTTConnectPacket extends ConnectPacket {}
+export interface MQTTSubscription extends Subscription {}
+export interface MQTTSubscribePacket extends SubscribePacket {}
 
 export interface MqttModuleOptions {
   broker?: {
@@ -28,6 +35,17 @@ export interface MqttModuleOptions {
   };
 }
 
+export interface MQTTClientModuleOptions {
+    enabled: boolean;
+    host: string;
+    port: number;
+    clientId?: string;
+    username?: string;
+    password?: string;
+    reconnectPeriod?: number;
+}
+
+
 export interface MqttPublishOptions {
   qos?: 0 | 1 | 2;
   retain?: boolean;
@@ -45,9 +63,4 @@ export interface MqttMessage {
   retain: boolean;
 }
 
-export interface MQTTAuthHandler extends AuthenticateHandler {
-}
-export interface MQTTPublisherAuthHandler extends AuthorizePublishHandler {
-}
-export interface MQTTSubscriberAuthHandler extends AuthorizeSubscribeHandler {
-}
+

@@ -7,15 +7,15 @@ import { RMQConsumerOptions } from '../interface/index.interface';
  * Use this decorator to mark methods as RabbitMQ message consumers
  *
  * @example
- * ```typescript
- * @RMQConsumer({
- *   queue: RmqQueueEnum.DEVICE_COMMAND_SEND,
- *   prefetch: 5,
- *   autoCommit: true,
- * })
- * async handleDeviceCommand(payload: any, message: RMQConsumeMessage) {
- *   console.log('Processing:', payload);
- * }
+ * ```js
+ *   @RMQConsumer({
+ *     queue: RmqQueueEnum.DEVICE_COMMAND_SEND,
+ *     prefetch: 5,
+ *     autoCommit: true,
+ *   })
+ *   async handleDeviceCommand(payload: any, message: RMQConsumeMessage) {
+ *     console.log('Processing:', payload);
+ *   }
  * ```
  */
 export function RMQConsumer(options: RMQConsumerOptions) {

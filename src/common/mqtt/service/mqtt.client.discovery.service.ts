@@ -2,18 +2,21 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { DiscoveryService, MetadataScanner, Reflector } from '@nestjs/core';
 import { InstanceWrapper } from '@nestjs/core/injector/instance-wrapper';
 import { MqttClientService } from './mqtt.client.service';
-import { MQTT_SUBSCRIBER_PARAMS } from '../constant/index.constant';
+import { MQTT_BROKER_HOOKS_METADATA_CONSTANT } from '../constant/index.constant';
 import { MqttSubscriberMetadata } from '../decorator/mqtt.subscribe.decorator';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { MqttBrokerService } from './mqtt.broker.service';
+
 
 @Injectable()
-export class MqttDiscoveryService implements OnModuleInit {
+export class MqttClientDiscoveryService implements OnModuleInit {
   constructor(
     private readonly discoveryService: DiscoveryService,
     private readonly metadataScanner: MetadataScanner,
     private readonly reflector: Reflector,
-    private readonly mqttClient: MqttClientService,
+    // private readonly mqttClient: MqttClientService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly brokerService: MqttBrokerService,
   ) {}
 
   onModuleInit() {
@@ -40,7 +43,7 @@ export class MqttDiscoveryService implements OnModuleInit {
 
   // private registerMqttSubscriber(instance: any, methodName: string) {
   //   const metadata: MqttSubscriberMetadata = this.reflector.get(
-  //     MQTT_SUBSCRIBER_PARAMS,
+  //     MQTT_SUBSCRIBER_AUTH_HANDLER_METADATA_CONSTANT,
   //     instance[methodName],
   //   );
 
