@@ -5,8 +5,8 @@ import {
   OnModuleDestroy,
   Inject,
 } from '@nestjs/common';
-import { MQTTClientModuleOptions } from '../interface/index.interface';
-import { MQTT_CLIENT_MODULE_OPTIONS_CONSTANT } from '../constant/index.constant';
+import { MQTTClientModuleOptions } from '../interface';
+import { MQTT_CLIENT_MODULE_OPTIONS_CONSTANT } from '../constant';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 // import * as mqtt from 'mqtt';
 // import { MqttModuleOptions, MqttPublishOptions, MqttSubscribeOptions } from '../interfaces/mqtt.interface';

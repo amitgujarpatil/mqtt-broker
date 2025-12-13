@@ -1,5 +1,5 @@
 import { SetMetadata } from '@nestjs/common';
-import { MQTT_SUBSCRIBER_PARAMS_CONSTANT } from '../constant/index.constant';
+import { MQTT_SUBSCRIBER_PARAMS_CONSTANT } from '../constant';
 
 export interface MqttSubscriberMetadata {
   topic: string;

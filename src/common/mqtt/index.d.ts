@@ -5,7 +5,7 @@ export {
   MQTTSubscription,
   MQTTClientModuleOptions,
   MQTTSubscribePacket,
-} from './interface/index.interface';
+} from './interface';
 
 export {
   MQTTAuthenticate,
@@ -13,6 +13,5 @@ export {
   MQTTAuthorizeSubscribe,
   MQTTPreConnect,
   MQTTPublished,
-} from './decorator/mqtt.auth.decorator';
-
-export * from './service/mqtt.subscribe.decorator';
+  MQTTEvent
+} from './decorator';

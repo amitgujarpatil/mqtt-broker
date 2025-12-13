@@ -1,4 +1,4 @@
-import { MQTT_BROKER_HOOKS_METADATA_CONSTANT } from '../constant/index.constant';
+import { MQTT_BROKER_HOOKS_METADATA_CONSTANT } from '../constant';
 
 /**
  * Decorator for marking a method as the MQTT authentication handler.

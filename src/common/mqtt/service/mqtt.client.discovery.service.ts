@@ -2,7 +2,7 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { DiscoveryService, MetadataScanner, Reflector } from '@nestjs/core';
 import { InstanceWrapper } from '@nestjs/core/injector/instance-wrapper';
 import { MqttClientService } from './mqtt.client.service';
-import { MQTT_BROKER_HOOKS_METADATA_CONSTANT } from '../constant/index.constant';
+import { MQTT_BROKER_HOOKS_METADATA_CONSTANT } from '../constant';
 import { MqttSubscriberMetadata } from '../decorator/mqtt.subscribe.decorator';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MqttBrokerService } from './mqtt.broker.service';

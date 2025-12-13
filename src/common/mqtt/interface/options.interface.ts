@@ -1,11 +1,4 @@
-import { AedesOptions,  AuthenticateHandler, AuthorizePublishHandler, AuthorizeSubscribeHandler, Client,SubscribePacket, ConnectPacket, PublishPacket, Subscription } from "aedes";
-
-// masked export to avoid circular dependencies
-export interface MQTTClient extends Client {}
-export interface MQTTPublishPacket extends PublishPacket {}
-export interface MQTTConnectPacket extends ConnectPacket {}
-export interface MQTTSubscription extends Subscription {}
-export interface MQTTSubscribePacket extends SubscribePacket {}
+import { AedesOptions } from "aedes";
 
 export interface MqttModuleOptions {
   broker?: {
@@ -45,22 +38,8 @@ export interface MQTTClientModuleOptions {
     reconnectPeriod?: number;
 }
 
-
 export interface MqttPublishOptions {
   qos?: 0 | 1 | 2;
   retain?: boolean;
   dup?: boolean;
 }
-
-export interface MqttSubscribeOptions {
-  qos?: 0 | 1 | 2;
-}
-
-export interface MqttMessage {
-  topic: string;
-  payload: Buffer | string;
-  qos: 0 | 1 | 2;
-  retain: boolean;
-}
-
-

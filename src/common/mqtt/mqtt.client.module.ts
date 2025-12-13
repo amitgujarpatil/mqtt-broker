@@ -1,9 +1,9 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { MqttClientService } from './service/mqtt.client.service';
 import { MqttClientDiscoveryService } from './service/mqtt.client.discovery.service';
-import { MQTTClientModuleOptions } from './interface/index.interface';
-import { MQTT_CLIENT_MODULE_OPTIONS_CONSTANT } from './constant/index.constant';
-import { DynamicModuleOptions } from './type/index.type';
+import { MQTTClientModuleOptions } from './interface';
+import { MQTT_CLIENT_MODULE_OPTIONS_CONSTANT } from './constant';
+import { DynamicModuleOptions } from './type';
 
 @Module({})
 export class MqttClientModule {

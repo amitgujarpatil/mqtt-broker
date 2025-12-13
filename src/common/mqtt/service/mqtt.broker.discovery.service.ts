@@ -1,52 +1,73 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { DiscoveryService, MetadataScanner } from '@nestjs/core';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MqttBrokerService } from './mqtt.broker.service';
-import { MQTT_BROKER_HOOKS_METADATA_CONSTANT } from '../constant/index.constant';
+import { MQTT_BROKER_EVENTS_METADATA_CONSTANT, MQTT_BROKER_HOOKS_METADATA_CONSTANT } from '../constant';
+import { MQTTEventHandler } from '../type';
+import { EVENT_WRAPPERS } from '../util';
 
 @Injectable()
 export class MqttBrokerDiscoveryService implements OnModuleInit {
   constructor(
     private readonly discoveryService: DiscoveryService,
     private readonly metadataScanner: MetadataScanner,
-    private readonly eventEmitter: EventEmitter2,
     private readonly brokerService: MqttBrokerService,
   ) {}
 
   async onModuleInit() {
     await this.brokerService.initializeBroker();
-    this.registerBrokerHooks();
+    this.registerBrokerHooksAndEvents();
   }
-
+  
   /**
-   * Scan all providers & controllers for MQTT hook decorators
+   * Scan all providers & controllers for MQTT hook and event decorators
    */
-  private registerBrokerHooks() {
+  private registerBrokerHooksAndEvents() {
     const wrappers = [
       ...this.discoveryService.getProviders(),
       ...this.discoveryService.getControllers(),
     ];
 
-    for (const wrapper of wrappers) {
-      const instance = wrapper.instance;
+    const event_handlers: MQTTEventHandler[] = [];
+
+    for (const { instance } of wrappers) {
       if (!instance) continue;
 
       const prototype = Object.getPrototypeOf(instance);
-      const methodNames = this.metadataScanner.getAllMethodNames(prototype);
+      const method_names = this.metadataScanner.getAllMethodNames(prototype);
 
-      for (const methodName of methodNames) {
-        const hookType = Reflect.getMetadata(
+      for (const method_name of method_names) {
+        const hook_type = Reflect.getMetadata(
           MQTT_BROKER_HOOKS_METADATA_CONSTANT,
           instance,
-          methodName,
+          method_name,
         );
 
-        if (!hookType) continue;
+        if (hook_type) {
+          // need to bind the method to the instance,  so method can access "this"
+          const handler = instance[method_name].bind(instance);
+          this.registerHook(hook_type, handler);
+          continue;
+        }
 
-        const handler = instance[methodName].bind(instance);
-        this.registerHook(hookType, handler);
+        const event_type = Reflect.getMetadata(
+          MQTT_BROKER_EVENTS_METADATA_CONSTANT,
+          instance,
+          method_name,
+        );
+
+        if (event_type) {
+          // need to bind the method to the instance,  so method can access "this"
+          const handler = instance[method_name].bind(instance);
+          // wrapp the handler to aedes expected signature
+          const event_wrapper = EVENT_WRAPPERS[event_type];
+          if (event_wrapper) {
+            event_handlers.push({ event: event_type, callback: event_wrapper(handler) });
+          }
+        }
       }
     }
+
+    this.brokerService.registerEventHandlers(event_handlers);
   }
 
   /**

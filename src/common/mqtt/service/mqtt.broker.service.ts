@@ -1,7 +1,6 @@
 import {
   Injectable,
   Logger,
-  OnModuleInit,
   OnModuleDestroy,
   Inject,
 } from '@nestjs/common';
@@ -11,8 +10,9 @@ import { createServer as createTlsServer, Server as TlsServer } from 'tls';
 import {
   MqttModuleOptions,
   MqttPublishOptions,
-} from '../interface/index.interface';
-import { MQTT_BROKER_MODULE_OPTIONS_CONSTANT } from '../constant/index.constant';
+} from '../interface';
+import { MQTT_BROKER_MODULE_OPTIONS_CONSTANT } from '../constant';
+import { MQTTEventType } from '../type';
 
 @Injectable()
 export class MqttBrokerService implements OnModuleDestroy {
@@ -27,9 +27,6 @@ export class MqttBrokerService implements OnModuleDestroy {
     private readonly options: MqttModuleOptions,
   ) {}
 
-  //   async onModuleInit() {
-  //     await this.initializeBroker();
-  //   }
 
   async onModuleDestroy() {
     await this.shutdown();
@@ -119,6 +116,20 @@ export class MqttBrokerService implements OnModuleDestroy {
     this.aedes.on('connackSent', (packet, client) => {
       this._logger.debug(`CONNACK sent to ${client.id}`);
     });
+  }
+
+  /**
+   * Register multiple event handlers at once
+   */
+  registerEventHandlers(
+    events: {
+      event: MQTTEventType;
+      callback: (...args: any[]) => void | Promise<void>;
+    }[]
+  ): void {
+    for (const { event, callback } of events) {
+      this.aedes.on(event as any, callback);
+    }
   }
 
   /**
@@ -307,3 +318,4 @@ export class MqttBrokerService implements OnModuleDestroy {
     this._logger.log('Graceful shutdown completed');
   }
 }
+
