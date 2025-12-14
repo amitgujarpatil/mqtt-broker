@@ -12,7 +12,7 @@ import {
   MqttPublishOptions,
 } from '../interface';
 import { MQTT_BROKER_MODULE_OPTIONS_CONSTANT } from '../constant';
-import { MQTTEventType } from '../type';
+import { MQTTEventEnum, MQTTHookEnum } from '../enum';
 
 @Injectable()
 export class MqttBrokerService implements OnModuleDestroy {
@@ -43,9 +43,6 @@ export class MqttBrokerService implements OnModuleDestroy {
 
     this.aedes = new Aedes(brokerConfig.aedesOptions || {});
 
-    // Setup event handlers
-    this.setupEventHandlers();
-
     // Create server (TCP or TLS)
     // with tls we need to provide certificates
     if (brokerConfig.ssl) {
@@ -74,61 +71,40 @@ export class MqttBrokerService implements OnModuleDestroy {
     });
   }
 
-  private setupEventHandlers(): void {
-    // Client connecting
-    this.aedes.on('client', (client) => {
-      this._logger.log(`Client connecting: ${client.id}`);
-    });
-
-    // Client connected
-    this.aedes.on('clientReady', (client) => {
-      this._logger.log(`Client connected: ${client.id}`);
-      this.connectedClients.add(client.id);
-
-      // Set custom keepalive if configured
-      if (this.options.broker?.keepaliveTimeout) {
-        (client as any)._keepaliveInterval =
-          this.options.broker.keepaliveTimeout;
-      }
-    });
-
-    // Client disconnected
-    this.aedes.on('clientDisconnect', (client) => {
-      this._logger.log(`Client disconnected: ${client.id}`);
-      this.connectedClients.delete(client.id);
-    });
-
-    // Message published
-    this.aedes.on('publish', (packet, client) => {
-      if (client) {
-        this._logger.debug(
-          `Message published by ${client.id} to ${packet.topic}`,
-        );
-      }
-    });
-
-    // Keepalive timeout
-    this.aedes.on('keepaliveTimeout', (client) => {
-      this._logger.warn(`Keepalive timeout for client: ${client.id}`);
-    });
-
-    // Connection acknowledgment sent
-    this.aedes.on('connackSent', (packet, client) => {
-      this._logger.debug(`CONNACK sent to ${client.id}`);
-    });
-  }
-
   /**
    * Register multiple event handlers at once
    */
   registerEventHandlers(
     events: {
-      event: MQTTEventType;
+      event: MQTTEventEnum;
       callback: (...args: any[]) => void | Promise<void>;
     }[]
   ): void {
     for (const { event, callback } of events) {
-      this.aedes.on(event as any, callback);
+       try {
+        this.aedes.on(event as any, callback);
+      } catch (error) {
+        this._logger.error(
+          `Failed to register handler for event ${event}: ${error.message}`,
+        );
+      }
+    }
+  }
+
+  registerHookHandlers(
+    hooks: {
+      hook: MQTTHookEnum;
+      callback: (...args: any[]) => void | Promise<void>;
+    }[]
+  ): void {
+    for (const { hook, callback } of hooks) {
+      try {
+         this.aedes[hook as any] = callback;
+      } catch (error) {
+        this._logger.error(
+          `Failed to register handler for hook ${hook}: ${error.message}`,
+        );
+      }
     }
   }
 
@@ -226,61 +202,6 @@ export class MqttBrokerService implements OnModuleDestroy {
   }
 
   /**
-   * Publish a message to a topic
-   */
-  async publish(
-    topic: string,
-    payload: string | Buffer,
-    options?: MqttPublishOptions,
-  ): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const packet: PublishPacket = {
-        cmd: 'publish',
-        topic,
-        payload: Buffer.isBuffer(payload) ? payload : Buffer.from(payload),
-        qos: options?.qos || 0,
-        retain: options?.retain || false,
-        dup: options?.dup || false,
-      };
-
-      this.aedes.publish(packet, (err) => {
-        if (err) {
-          this._logger.error(`Failed to publish to ${topic}: ${err.message}`);
-          reject(err);
-        } else {
-          this._logger.debug(`Published to ${topic}`);
-          resolve();
-        }
-      });
-    });
-  }
-
-  /**
-   * Close a specific client connection
-   */
-  closeClient(clientId: string): void {
-    const client = this.connectedClients[clientId];
-    if (client) {
-      client.close();
-      this._logger.log(`Closed client: ${clientId}`);
-    }
-  }
-
-  /**
-   * Get connected clients count
-   */
-  getClientCount(): number {
-    return this.connectedClients.size;
-  }
-
-  /**
-   * Get list of connected client IDs
-   */
-  getConnectedClients(): string[] {
-    return Array.from(this.connectedClients);
-  }
-
-  /**
    * Check if broker is ready
    */
   isReady(): boolean {
@@ -314,7 +235,6 @@ export class MqttBrokerService implements OnModuleDestroy {
       });
     });
 
-    this.connectedClients.clear();
     this._logger.log('Graceful shutdown completed');
   }
 }
