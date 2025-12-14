@@ -13,5 +13,9 @@ export {
   MQTTAuthorizeSubscribe,
   MQTTPreConnect,
   MQTTPublished,
-  MQTTEvent
+  MQTTEvent,
+  MQTTHook
 } from './decorator';
+
+export * as MQTTEnums from './enum';
+export * from './enum';

@@ -1,4 +1,4 @@
-import { MQTTEventHandlers } from "../interface";
+import { MQTTEventHandlers, MQTTHookHandlers } from "../interface";
 
 // Event wrappers with proper typing
 export const EVENT_WRAPPERS: {
@@ -17,4 +17,18 @@ export const EVENT_WRAPPERS: {
   connackSent: (fn) => (packet, client) => fn(packet, client),
   keepaliveTimeout: (fn) => (client) => fn(client),
   ping: (fn) => (packet, client) => fn(packet, client),
+};
+
+export const HOOK_WRAPPERS: {
+  [K in keyof MQTTHookHandlers]: (fn: MQTTHookHandlers[K]) => MQTTHookHandlers[K];
+} = {
+  preConnect: (fn) => (...args) => fn(...args),
+  authenticate: (fn) => (client, username, password, done) =>
+    fn(client, username, password, done),
+  authorizePublish: (fn) => (client, packet, callback) =>
+    fn(client, packet, callback),
+  authorizeSubscribe: (fn) => (client, subscription, callback) =>
+    fn(client, subscription, callback),
+  published: (fn) => (packet, client, callback) =>
+    fn(packet, client, callback),
 };

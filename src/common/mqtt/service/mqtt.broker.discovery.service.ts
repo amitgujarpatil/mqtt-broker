@@ -2,8 +2,8 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { DiscoveryService, MetadataScanner } from '@nestjs/core';
 import { MqttBrokerService } from './mqtt.broker.service';
 import { MQTT_BROKER_EVENTS_METADATA_CONSTANT, MQTT_BROKER_HOOKS_METADATA_CONSTANT } from '../constant';
-import { MQTTEventHandler } from '../type';
 import { EVENT_WRAPPERS } from '../util';
+import { MQTTEventHandler, MQTTHookHandler } from '../interface';
 
 @Injectable()
 export class MqttBrokerDiscoveryService implements OnModuleInit {
@@ -28,6 +28,7 @@ export class MqttBrokerDiscoveryService implements OnModuleInit {
     ];
 
     const event_handlers: MQTTEventHandler[] = [];
+    const hook_handlers: MQTTHookHandler[] = [];
 
     for (const { instance } of wrappers) {
       if (!instance) continue;
@@ -45,8 +46,7 @@ export class MqttBrokerDiscoveryService implements OnModuleInit {
         if (hook_type) {
           // need to bind the method to the instance,  so method can access "this"
           const handler = instance[method_name].bind(instance);
-          this.registerHook(hook_type, handler);
-          continue;
+          hook_handlers.push({ hook: hook_type, callback: handler });
         }
 
         const event_type = Reflect.getMetadata(
@@ -68,6 +68,7 @@ export class MqttBrokerDiscoveryService implements OnModuleInit {
     }
 
     this.brokerService.registerEventHandlers(event_handlers);
+    this.brokerService.registerHookHandlers(hook_handlers);
   }
 
   /**

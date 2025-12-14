@@ -8,11 +8,11 @@ import Aedes, { Client, ConnectPacket, PublishPacket } from 'aedes';
 import { createServer, Server as NetServer } from 'net';
 import { createServer as createTlsServer, Server as TlsServer } from 'tls';
 import {
+  MQTTHookType,
   MqttModuleOptions,
-  MqttPublishOptions,
+  MQTTEventType
 } from '../interface';
 import { MQTT_BROKER_MODULE_OPTIONS_CONSTANT } from '../constant';
-import { MQTTEventEnum, MQTTHookEnum } from '../enum';
 
 @Injectable()
 export class MqttBrokerService implements OnModuleDestroy {
@@ -20,7 +20,6 @@ export class MqttBrokerService implements OnModuleDestroy {
   private aedes: Aedes;
   private server: NetServer | TlsServer;
   private isShuttingDown = false;
-  private connectedClients = new Set<string>();
 
   constructor(
     @Inject(MQTT_BROKER_MODULE_OPTIONS_CONSTANT)
@@ -76,7 +75,7 @@ export class MqttBrokerService implements OnModuleDestroy {
    */
   registerEventHandlers(
     events: {
-      event: MQTTEventEnum;
+      event: MQTTEventType;
       callback: (...args: any[]) => void | Promise<void>;
     }[]
   ): void {
@@ -91,9 +90,12 @@ export class MqttBrokerService implements OnModuleDestroy {
     }
   }
 
+  /**
+   * Register multiple hook handlers at once
+   */
   registerHookHandlers(
     hooks: {
-      hook: MQTTHookEnum;
+      hook: MQTTHookType;
       callback: (...args: any[]) => void | Promise<void>;
     }[]
   ): void {

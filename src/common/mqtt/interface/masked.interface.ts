@@ -3,7 +3,8 @@ import type {
   ConnackPacket, 
   PingreqPacket, 
   AedesPublishPacket, 
-  PubrelPacket, 
+  PubrelPacket,
+  PreConnectHandler, 
 } from 'aedes';
 
 // masked export to avoid circular dependencies
@@ -33,3 +34,55 @@ export interface MQTTEventHandlers {
   subscribe: (subscriptions: MQTTSubscription[], client: MQTTClient) => void;
   unsubscribe: (unsubscriptions: string[], client: MQTTClient) => void;
 }
+
+export type MQTTEventType = keyof MQTTEventHandlers;
+export type MQTTEventHandler = {
+  event: MQTTEventType;
+  callback: (...args: any[]) => void | Promise<void>;
+};
+
+type MQTTPreConnectHandler = (
+  client: MQTTClient,
+  packet: MQTTConnectPacket,
+  callback: (error: Error | null, success: boolean) => void
+) => void;
+
+type MQTTAuthenticateHandler = (
+  client: MQTTClient,
+  username: Readonly<string | undefined>,
+  password: Readonly<Buffer | undefined>,
+  done: (error: Error | null, success: boolean | null) => void
+) => void;
+
+type MQTTAuthorizePublishHandler = (
+  client: MQTTClient | null,
+  packet: MQTTPublishPacket,
+  callback: (error?: Error | null) => void
+) => void;
+
+type MQTTAuthorizeSubscribeHandler = (
+  client: MQTTClient | null,
+  subscription: MQTTSubscription,
+  callback: (error: Error | null, subscription?: MQTTSubscription | null) => void
+) => void;
+
+
+type MQTTPublishedHandler = (
+  packet: MQTTPublishPacket,
+  client: MQTTClient | null,
+  callback: (error?: Error | null) => void
+) => void;
+
+export interface MQTTHookHandlers {
+   preConnect: MQTTPreConnectHandler;
+   authenticate: MQTTAuthenticateHandler;
+   authorizePublish: MQTTAuthorizePublishHandler;
+   authorizeSubscribe: MQTTAuthorizeSubscribeHandler;
+   published: MQTTPublishedHandler;
+}
+
+export type MQTTHookType = keyof MQTTHookHandlers;
+export type MQTTHookHandler = {
+  hook: MQTTHookType;
+  callback: (...args: any[]) => void | Promise<void>;
+};
