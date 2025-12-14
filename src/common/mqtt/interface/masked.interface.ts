@@ -1,10 +1,13 @@
-import { Client,SubscribePacket, ConnectPacket, PublishPacket, Subscription } from "aedes";
-import type { 
-  ConnackPacket, 
-  PingreqPacket, 
-  AedesPublishPacket, 
+import {
+  Client,
+  SubscribePacket,
+  ConnectPacket,
+  PublishPacket,
+  Subscription,
+  ConnackPacket,
+  PingreqPacket,
+  AedesPublishPacket,
   PubrelPacket,
-  PreConnectHandler, 
 } from 'aedes';
 
 // masked export to avoid circular dependencies
@@ -31,7 +34,10 @@ export interface MQTTEventHandlers {
   connackSent: (packet: MQTTConnackPacket, client: MQTTClient) => void;
   ping: (packet: MQTTPingreqPacket, client: MQTTClient) => void;
   publish: (packet: MQTTPublishPacket, client: MQTTClient | null) => void;
-  ack: (packet: MQTTPublishPacket | MQTTPubrelPacket, client: MQTTClient) => void;
+  ack: (
+    packet: MQTTPublishPacket | MQTTPubrelPacket,
+    client: MQTTClient,
+  ) => void;
   subscribe: (subscriptions: MQTTSubscription[], client: MQTTClient) => void;
   unsubscribe: (unsubscriptions: string[], client: MQTTClient) => void;
 }
@@ -45,41 +51,43 @@ export type MQTTEventHandler = {
 type MQTTPreConnectHandler = (
   client: MQTTClient,
   packet: MQTTConnectPacket,
-  callback: (error: Error | null, success: boolean) => void
+  callback: (error: Error | null, success: boolean) => void,
 ) => void | Promise<void>;
 
 type MQTTAuthenticateHandler = (
   client: MQTTClient,
   username: string,
   password: Buffer,
-  done?: (error: Error | null, success: boolean | null) => void
+  done?: (error: Error | null, success: boolean | null) => void,
 ) => void | Promise<void>;
 
 type MQTTAuthorizePublishHandler = (
   client: MQTTClient | null,
   packet: MQTTPublishPacket,
-  callback: (error?: Error | null) => void
+  callback: (error?: Error | null) => void,
 ) => void | Promise<void>;
 
 type MQTTAuthorizeSubscribeHandler = (
   client: MQTTClient | null,
   subscription: MQTTSubscription,
-  callback: (error: Error | null, subscription?: MQTTSubscription | null) => void
+  callback: (
+    error: Error | null,
+    subscription?: MQTTSubscription | null,
+  ) => void,
 ) => void | Promise<void>;
-
 
 type MQTTPublishedHandler = (
   packet: MQTTPublishedPacket,
   client: MQTTClient | null,
-  callback: (error?: Error | null) => void
+  callback: (error?: Error | null) => void,
 ) => void | Promise<void>;
 
 export interface MQTTHookHandlers {
-   preConnect: MQTTPreConnectHandler;
-   authenticate: MQTTAuthenticateHandler;
-   authorizePublish: MQTTAuthorizePublishHandler;
-   authorizeSubscribe: MQTTAuthorizeSubscribeHandler;
-   published: MQTTPublishedHandler;
+  preConnect: MQTTPreConnectHandler;
+  authenticate: MQTTAuthenticateHandler;
+  authorizePublish: MQTTAuthorizePublishHandler;
+  authorizeSubscribe: MQTTAuthorizeSubscribeHandler;
+  published: MQTTPublishedHandler;
 }
 
 export type MQTTHookType = keyof MQTTHookHandlers;

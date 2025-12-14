@@ -12,8 +12,7 @@ export class RedisService implements OnModuleInit {
   private _client: RedisClientType;
   private _cfg: RedisClientConfig;
 
-  constructor(readonly configService: ConfigService) {   
-  }
+  constructor(readonly configService: ConfigService) {}
   async onModuleInit() {
     await this.connect();
   }

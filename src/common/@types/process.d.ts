@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import schema from "../../config/config.validations";
+import schema from '../../config/config.validations';
 
 // add schema type in process env type
 declare global {
@@ -9,4 +9,3 @@ declare global {
     interface ProcessEnv extends z.infer<typeof schema> {}
   }
 }
-

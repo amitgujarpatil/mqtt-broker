@@ -1,7 +1,10 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { DiscoveryService, MetadataScanner } from '@nestjs/core';
 import { MqttBrokerService } from './mqtt.broker.service';
-import { MQTT_BROKER_EVENTS_METADATA_CONSTANT, MQTT_BROKER_HOOKS_METADATA_CONSTANT } from '../constant';
+import {
+  MQTT_BROKER_EVENTS_METADATA_CONSTANT,
+  MQTT_BROKER_HOOKS_METADATA_CONSTANT,
+} from '../constant';
 import { EVENT_WRAPPERS, HOOK_WRAPPERS } from '../util';
 import { MQTTEventHandler, MQTTHookHandler } from '../interface';
 
@@ -18,7 +21,7 @@ export class MqttBrokerDiscoveryService implements OnModuleInit {
     await this.brokerService.initializeBroker();
     this.registerBrokerHooksAndEvents();
   }
-  
+
   /**
    * Scan all providers & controllers for MQTT hook and event decorators
    */
@@ -48,7 +51,10 @@ export class MqttBrokerDiscoveryService implements OnModuleInit {
           // need to bind the method to the instance,  so method can access "this"
           const handler = instance[method_name].bind(instance);
           const wrapper = HOOK_WRAPPERS[hook_type];
-          hook_handlers.push({ hook: hook_type, callback: wrapper(handler,this._logger) });
+          hook_handlers.push({
+            hook: hook_type,
+            callback: wrapper(handler, this._logger),
+          });
         }
 
         const event_type = Reflect.getMetadata(
@@ -63,7 +69,10 @@ export class MqttBrokerDiscoveryService implements OnModuleInit {
           // wrapp the handler to aedes expected signature
           const event_wrapper = EVENT_WRAPPERS[event_type];
           if (event_wrapper) {
-            event_handlers.push({ event: event_type, callback: event_wrapper(handler) });
+            event_handlers.push({
+              event: event_type,
+              callback: event_wrapper(handler),
+            });
           }
         }
       }

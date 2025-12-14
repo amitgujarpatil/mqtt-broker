@@ -1,9 +1,11 @@
-import { Logger } from "@nestjs/common";
-import { MQTTEventHandlers, MQTTHookHandlers } from "../interface";
+import { Logger } from '@nestjs/common';
+import { MQTTEventHandlers, MQTTHookHandlers } from '../interface';
 
 // Event wrappers with proper typing
 export const EVENT_WRAPPERS: {
-  [K in keyof MQTTEventHandlers]: (fn: MQTTEventHandlers[K]) => MQTTEventHandlers[K];
+  [K in keyof MQTTEventHandlers]: (
+    fn: MQTTEventHandlers[K],
+  ) => MQTTEventHandlers[K];
 } = {
   closed: (fn) => () => fn(),
   client: (fn) => (client) => fn(client),
@@ -21,7 +23,10 @@ export const EVENT_WRAPPERS: {
 };
 
 export const HOOK_WRAPPERS: {
-  [K in keyof MQTTHookHandlers]: (fn: MQTTHookHandlers[K], logger?: Logger) => MQTTHookHandlers[K];
+  [K in keyof MQTTHookHandlers]: (
+    fn: MQTTHookHandlers[K],
+    logger?: Logger,
+  ) => MQTTHookHandlers[K];
 } = {
   preConnect: (fn, logger) => async (client, packet, cb) => {
     try {
@@ -41,7 +46,7 @@ export const HOOK_WRAPPERS: {
 
   authorizePublish: (fn, logger) => async (client, packet, cb) => {
     try {
-      return await fn(client, packet,cb);
+      return await fn(client, packet, cb);
     } catch (error) {
       logger.error('[MQTT] authorizePublish error:', error);
     }
@@ -59,7 +64,7 @@ export const HOOK_WRAPPERS: {
     try {
       await fn(client, packet, cb);
     } catch (error) {
-        logger.error('[MQTT] published error:', error);
+      logger.error('[MQTT] published error:', error);
     }
   },
 };

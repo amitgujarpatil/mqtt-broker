@@ -27,11 +27,13 @@ export class RMQDiscoveryService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    if(process.env.ENABLE_RMQ_BROKER !== 'true'){
-      this.logger.log('RMQ Broker is disabled via ENABLE_RMQ_BROKER env variable.');
+    if (process.env.ENABLE_RMQ_BROKER !== 'true') {
+      this.logger.log(
+        'RMQ Broker is disabled via ENABLE_RMQ_BROKER env variable.',
+      );
       return;
     }
-    
+
     await this.rmqConsumerService.setupExchangesAndQueues(
       this.configService.get<IRMQConfigVariables>('broker.rmq', {
         infer: true,

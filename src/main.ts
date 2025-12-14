@@ -17,8 +17,7 @@ import { AllExceptionsFilter } from './common/filters/allexception.filter';
 async function bootstrap() {
   const cfg = config(process.env);
 
-  const app = await NestFactory.create(AppModule, {
-  });
+  const app = await NestFactory.create(AppModule, {});
 
   app.useGlobalPipes(
     new ValidationPipe({

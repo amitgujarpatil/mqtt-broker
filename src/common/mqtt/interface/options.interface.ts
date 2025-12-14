@@ -1,8 +1,9 @@
-import { AedesOptions } from "aedes";
+import { Logger } from '@nestjs/common';
+import { AedesOptions } from 'aedes';
 
 export interface MqttModuleOptions {
-  broker?: {
-    port?: number;
+  broker: {
+    port: number;
     host?: string;
     ssl?: boolean;
     sslOptions?: {
@@ -15,6 +16,8 @@ export interface MqttModuleOptions {
     maxConnections?: number;
     keepaliveTimeout?: number;
     concurrency?: number;
-    aedesOptions?:AedesOptions;
+    aedesOptions?: AedesOptions;
+    logs?: boolean;
+    logger?: Logger;
   };
 }

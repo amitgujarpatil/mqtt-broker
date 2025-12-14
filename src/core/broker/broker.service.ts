@@ -1,16 +1,14 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
-
   MQTTClient,
   MQTTPublishPacket,
   MQTTSubscribePacket,
-
   MQTTConnectPacket,
   MQTTEvent,
   MQTTHook,
   MQTTSubscription,
-  MQTTPublishedPacket
+  MQTTPublishedPacket,
 } from 'src/common/mqtt';
 import { MQTTEventEnum, MQTTHookEnum } from 'src/common/mqtt/enum';
 import { RMQPublisherSvc } from 'src/common/rmq/decorator/rmq.services.decorator';
@@ -46,8 +44,8 @@ export class BrokerService implements OnModuleInit {
     client: MQTTClient,
     username: string,
     password: Buffer,
-    cb: (err?: Error | null, result?: boolean) => void
-  ){
+    cb: (err?: Error | null, result?: boolean) => void,
+  ) {
     console.log('Authenticating user:', username, 'on handler:', password);
     cb(null, true);
     return;
@@ -57,7 +55,7 @@ export class BrokerService implements OnModuleInit {
   async handlePreConnect(
     client: MQTTClient,
     packet: MQTTConnectPacket,
-    cb: (error: Error | null, success: boolean) => void
+    cb: (error: Error | null, success: boolean) => void,
   ) {
     console.log(`Pre-connecting client: ${client.id}`);
     cb(null, true);
@@ -68,7 +66,7 @@ export class BrokerService implements OnModuleInit {
   async authorizePublish(
     client: MQTTClient | null,
     packet: MQTTPublishPacket,
-    cb: (error?: Error | null) => void
+    cb: (error?: Error | null) => void,
   ) {
     console.log(
       `Authorizing publish for client: ${client?.id} to topic: ${packet.topic}`,
@@ -76,12 +74,12 @@ export class BrokerService implements OnModuleInit {
     cb(null);
     return;
   }
-  
+
   @MQTTHook(MQTTHookEnum.PUBLISHED)
   async handlePublished(
     client: MQTTClient | null,
     packet: MQTTPublishedPacket,
-    cb: (error?: Error | null) => void
+    cb: (error?: Error | null) => void,
   ) {
     console.log('handlePublished->', packet?.topic);
     console.log('handlePublished->', client?.id);
@@ -95,7 +93,7 @@ export class BrokerService implements OnModuleInit {
   @MQTTEvent(MQTTEventEnum.PUBLISH)
   async handlePublishedEVENT(
     packet: MQTTPublishedPacket,
-    client: MQTTClient | null
+    client: MQTTClient | null,
   ) {
     console.log('handlePublished->', packet?.topic);
     console.log('handlePublished->', client?.id);
@@ -108,9 +106,9 @@ export class BrokerService implements OnModuleInit {
 
   @MQTTHook(MQTTHookEnum.AUTHORIZE_SUBSCRIBE)
   async authorizeSubscribe(
-  client: MQTTClient | null,
-  subscription: MQTTSubscription,
-  cb: (error: Error | null, subscription?: MQTTSubscription | null) => void
+    client: MQTTClient | null,
+    subscription: MQTTSubscription,
+    cb: (error: Error | null, subscription?: MQTTSubscription | null) => void,
   ) {
     console.log(
       `Authorizing subscribe for client: ${client?.id} to topic: ${subscription.topic}`,
@@ -118,7 +116,4 @@ export class BrokerService implements OnModuleInit {
     cb(null, subscription);
     return;
   }
-
-  
-
 }

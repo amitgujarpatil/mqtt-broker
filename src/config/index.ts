@@ -89,10 +89,10 @@ const config = (config: Record<string, unknown>) => {
         createQueues: true,
         createBindings: true,
       } as IRMQConfigVariables,
-      aedes:{
+      aedes: {
         port: ENVS.MQTT_PORT || 1883,
         enableTls: ENVS.MQTT_ENABLE_TLS || false,
-      } as MqttBrokerConfig
+      } as MqttBrokerConfig,
     },
     compression: {
       enabled: true,

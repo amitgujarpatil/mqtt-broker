@@ -18,7 +18,7 @@ export class AllExceptionsFilter extends BaseExceptionFilter {
         return this.catchHttp(exception, host);
 
       default:
-        return super.catch(exception, host);  
+        return super.catch(exception, host);
     }
   }
 

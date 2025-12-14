@@ -1,22 +1,13 @@
-import {
-  Injectable,
-  Logger,
-  OnModuleDestroy,
-  Inject,
-} from '@nestjs/common';
-import Aedes, { Client, ConnectPacket, PublishPacket } from 'aedes';
+import { Injectable, Logger, OnModuleDestroy, Inject } from '@nestjs/common';
+import Aedes from 'aedes';
 import { createServer, Server as NetServer } from 'net';
 import { createServer as createTlsServer, Server as TlsServer } from 'tls';
-import {
-  MQTTHookType,
-  MqttModuleOptions,
-  MQTTEventType
-} from '../interface';
+import { MQTTHookType, MqttModuleOptions, MQTTEventType } from '../interface';
 import { MQTT_BROKER_MODULE_OPTIONS_CONSTANT } from '../constant';
 
 @Injectable()
 export class MqttBrokerService implements OnModuleDestroy {
-  private readonly _logger = new Logger(MqttBrokerService.name);
+  private readonly _logger: Logger;
   private aedes: Aedes;
   private server: NetServer | TlsServer;
   private isShuttingDown = false;
@@ -24,15 +15,21 @@ export class MqttBrokerService implements OnModuleDestroy {
   constructor(
     @Inject(MQTT_BROKER_MODULE_OPTIONS_CONSTANT)
     private readonly options: MqttModuleOptions,
-  ) {}
-
+  ) {
+    if (this.options.broker?.logs) {
+      this._logger = new Logger(MqttBrokerService.name);
+    }
+    if (this.options.broker?.logger) {
+      this._logger = this.options.broker.logger;
+    }
+  }
 
   async onModuleDestroy() {
     await this.shutdown();
   }
 
   async initializeBroker(): Promise<void> {
-    const brokerConfig = this.options.broker || {
+    const brokerConfig = this.options?.broker || {
       port: 1883,
       ssl: false,
       maxConnections: 1000,
@@ -63,7 +60,7 @@ export class MqttBrokerService implements OnModuleDestroy {
 
     await new Promise<void>((resolve, reject) => {
       this.server.listen(port, host, () => {
-        this._logger.log(`MQTT Broker started on ${host}:${port}`);
+        this._logger?.log(`MQTT Broker started on ${host}:${port}`);
         resolve();
       });
       this.server.on('error', reject);
@@ -77,13 +74,13 @@ export class MqttBrokerService implements OnModuleDestroy {
     events: {
       event: MQTTEventType;
       callback: (...args: any[]) => void | Promise<void>;
-    }[]
+    }[],
   ): void {
     for (const { event, callback } of events) {
-       try {
+      try {
         this.aedes.on(event as any, callback);
       } catch (error) {
-        this._logger.error(
+        this._logger?.error(
           `Failed to register handler for event ${event}: ${error.message}`,
         );
       }
@@ -97,13 +94,13 @@ export class MqttBrokerService implements OnModuleDestroy {
     hooks: {
       hook: MQTTHookType;
       callback: (...args: any[]) => void | Promise<void>;
-    }[]
+    }[],
   ): void {
     for (const { hook, callback } of hooks) {
       try {
-         this.aedes[hook as any] = callback;
+        this.aedes[hook as any] = callback;
       } catch (error) {
-        this._logger.error(
+        this._logger?.error(
           `Failed to register handler for hook ${hook}: ${error.message}`,
         );
       }
@@ -125,13 +122,13 @@ export class MqttBrokerService implements OnModuleDestroy {
       return;
     }
 
-    this._logger.log('Starting graceful shutdown...');
+    this._logger?.log('Starting graceful shutdown...');
     this.isShuttingDown = true;
 
     // Close Aedes broker
     await new Promise<void>((resolve) => {
       this.aedes.close(() => {
-        this._logger.log('Aedes broker closed');
+        this._logger?.log('Aedes broker closed');
         resolve();
       });
     });
@@ -139,12 +136,11 @@ export class MqttBrokerService implements OnModuleDestroy {
     // Close server
     await new Promise<void>((resolve) => {
       this.server.close(() => {
-        this._logger.log('Server closed');
+        this._logger?.log('Server closed');
         resolve();
       });
     });
 
-    this._logger.log('Graceful shutdown completed');
+    this._logger?.log('Graceful shutdown completed');
   }
 }
-

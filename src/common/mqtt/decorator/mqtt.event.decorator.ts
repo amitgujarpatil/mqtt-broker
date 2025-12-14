@@ -1,11 +1,11 @@
-import { MQTT_BROKER_EVENTS_METADATA_CONSTANT } from "../constant";
-import { MQTTEventEnum } from "../enum";
-import { MQTTEventHandlers ,MQTTEventType} from "../interface";
+import { MQTT_BROKER_EVENTS_METADATA_CONSTANT } from '../constant';
+import { MQTTEventEnum } from '../enum';
+import { MQTTEventHandlers, MQTTEventType } from '../interface';
 
 export type MQTTEventDecorator<T extends MQTTEventType> = (
   target: any,
   propertyKey: string | symbol,
-  descriptor: TypedPropertyDescriptor<MQTTEventHandlers[T]>
+  descriptor: TypedPropertyDescriptor<MQTTEventHandlers[T]>,
 ) => void;
 
 /**
@@ -152,7 +152,7 @@ export type MQTTEventDecorator<T extends MQTTEventType> = (
  *
  * @param event The MQTT event name to bind the method to.
  * @returns A method decorator that registers the handler for the specified event.
- * 
+ *
  * @example
  * ```typescript
  * class MQTTBrokerService {
@@ -169,14 +169,14 @@ export type MQTTEventDecorator<T extends MQTTEventType> = (
  * ```
  */
 export function MQTTEvent<T extends MQTTEventType>(
-  event: MQTTEventEnum
+  event: MQTTEventEnum,
 ): MQTTEventDecorator<T> {
   return (target, propertyKey, descriptor) => {
     Reflect.defineMetadata(
       MQTT_BROKER_EVENTS_METADATA_CONSTANT,
       event,
       target,
-      propertyKey
+      propertyKey,
     );
     return descriptor;
   };

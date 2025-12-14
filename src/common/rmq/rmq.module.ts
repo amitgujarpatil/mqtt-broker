@@ -1,4 +1,4 @@
-import {  Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { RMQPublisherService } from './service/rmq.publisher.service';
 import { RMQConsumerService } from './service/rmq.consumer.service';
 import { CompressionModule } from '../compression/compression.module';
