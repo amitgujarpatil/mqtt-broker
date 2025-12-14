@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { BrokerService } from './broker.service';
 import { ConfigService } from '@nestjs/config';
-import { MqttBrokerModule } from 'src/common/mqtt/mqtt.broker.module';
+import { MqttBrokerModule } from 'src/common/mqtt';
 
 @Module({
   imports: [

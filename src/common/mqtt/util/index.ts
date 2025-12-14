@@ -57,7 +57,6 @@ export const HOOK_WRAPPERS: {
 
   published: (fn, logger) => async (client, packet, cb) => {
     try {
-        console.log("sumit->",packet);
       await fn(client, packet, cb);
     } catch (error) {
         logger.error('[MQTT] published error:', error);

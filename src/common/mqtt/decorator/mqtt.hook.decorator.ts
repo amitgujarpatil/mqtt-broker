@@ -14,7 +14,7 @@ export type MQTTHookDecorator<T extends MQTTHookType> = (
  * while enforcing the correct method signature at compile-time.
  *
  * ## Usage
- * Apply `.@MQTTHook('<hookName>')` above a method. The method will be executed
+ * Apply `.@MQTTHook(MQTTHookEnum.'<hookName>')` above a method. The method will be executed
  * whenever the corresponding broker hook is invoked.
  *
  * ## All Supported Hooks (with correct signatures)

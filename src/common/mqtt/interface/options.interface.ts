@@ -17,29 +17,4 @@ export interface MqttModuleOptions {
     concurrency?: number;
     aedesOptions?:AedesOptions;
   };
-  client?: {
-    enabled: boolean;
-    host: string;
-    port: number;
-    clientId?: string;
-    username?: string;
-    password?: string;
-    reconnectPeriod?: number;
-  };
-}
-
-export interface MQTTClientModuleOptions {
-    enabled: boolean;
-    host: string;
-    port: number;
-    clientId?: string;
-    username?: string;
-    password?: string;
-    reconnectPeriod?: number;
-}
-
-export interface MqttPublishOptions {
-  qos?: 0 | 1 | 2;
-  retain?: boolean;
-  dup?: boolean;
 }

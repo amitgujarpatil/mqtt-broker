@@ -3,7 +3,6 @@ export {
   MQTTConnectPacket,
   MQTTPublishPacket,
   MQTTSubscription,
-  MQTTClientModuleOptions,
   MQTTSubscribePacket,
 } from './interface';
 
@@ -14,3 +13,5 @@ export {
 
 export * as MQTTEnums from './enum';
 export * from './enum';
+
+export { MqttBrokerModule } from './mqtt.module';

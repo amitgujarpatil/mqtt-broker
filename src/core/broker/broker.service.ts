@@ -53,29 +53,29 @@ export class BrokerService implements OnModuleInit {
     return;
   }
 
-  // @MQTTHook(MQTTHookEnum.PRE_CONNECT)
-  // async handlePreConnect(
-  //   client: MQTTClient,
-  //   packet: MQTTConnectPacket,
-  //   cb: (error: Error | null, success: boolean) => void
-  // ) {
-  //   console.log(`Pre-connecting client: ${client.id}`);
-  //   cb(null, true);
-  //   return;
-  // }
+  @MQTTHook(MQTTHookEnum.PRE_CONNECT)
+  async handlePreConnect(
+    client: MQTTClient,
+    packet: MQTTConnectPacket,
+    cb: (error: Error | null, success: boolean) => void
+  ) {
+    console.log(`Pre-connecting client: ${client.id}`);
+    cb(null, true);
+    return;
+  }
 
-  // @MQTTHook(MQTTHookEnum.AUTHORIZE_PUBLISH)
-  // async authorizePublish(
-  //   client: MQTTClient | null,
-  //   packet: MQTTPublishPacket,
-  //   cb: (error?: Error | null) => void
-  // ) {
-  //   console.log(
-  //     `Authorizing publish for client: ${client?.id} to topic: ${packet.topic}`,
-  //   );
-  //   cb(null);
-  //   return;
-  // }
+  @MQTTHook(MQTTHookEnum.AUTHORIZE_PUBLISH)
+  async authorizePublish(
+    client: MQTTClient | null,
+    packet: MQTTPublishPacket,
+    cb: (error?: Error | null) => void
+  ) {
+    console.log(
+      `Authorizing publish for client: ${client?.id} to topic: ${packet.topic}`,
+    );
+    cb(null);
+    return;
+  }
   
   @MQTTHook(MQTTHookEnum.PUBLISHED)
   async handlePublished(
@@ -106,18 +106,18 @@ export class BrokerService implements OnModuleInit {
     return;
   }
 
-  // @MQTTHook(MQTTHookEnum.AUTHORIZE_SUBSCRIBE)
-  // async authorizeSubscribe(
-  // client: MQTTClient | null,
-  // subscription: MQTTSubscription,
-  // cb: (error: Error | null, subscription?: MQTTSubscription | null) => void
-  // ) {
-  //   console.log(
-  //     `Authorizing subscribe for client: ${client?.id} to topic: ${subscription.topic}`,
-  //   );
-  //   cb(null, subscription);
-  //   return;
-  // }
+  @MQTTHook(MQTTHookEnum.AUTHORIZE_SUBSCRIBE)
+  async authorizeSubscribe(
+  client: MQTTClient | null,
+  subscription: MQTTSubscription,
+  cb: (error: Error | null, subscription?: MQTTSubscription | null) => void
+  ) {
+    console.log(
+      `Authorizing subscribe for client: ${client?.id} to topic: ${subscription.topic}`,
+    );
+    cb(null, subscription);
+    return;
+  }
 
   
 
