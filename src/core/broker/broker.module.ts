@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { BrokerService } from './broker.service';
 import { ConfigService } from '@nestjs/config';
-import { MqttBrokerModule } from 'src/common/mqtt';
+import {MqttBrokerModule} from "@codewithamitpatil/amy-broker";
 
 @Module({
   imports: [
@@ -10,6 +10,7 @@ import { MqttBrokerModule } from 'src/common/mqtt';
         broker: {
           port: configService.get('brokers.aedes.port'),
           host: configService.get('brokers.aedes.host'),
+          logs:false,
         },
       }),
       inject: [ConfigService],

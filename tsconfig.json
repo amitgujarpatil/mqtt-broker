@@ -6,9 +6,10 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
-    "target": "es2017",
+    "target": "es2021",
     "sourceMap": true,
     "outDir": "./dist",
+    "moduleResolution": "node",
     "baseUrl": "./",
     "incremental": true,
     "skipLibCheck": true,
@@ -19,6 +20,6 @@
     "noFallthroughCasesInSwitch": false,
     "esModuleInterop": true,
     "noUnusedLocals": false,
-    "exactOptionalPropertyTypes": false
+    "exactOptionalPropertyTypes": false,
   }
 }
