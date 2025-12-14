@@ -17,6 +17,7 @@ export interface MQTTSubscribePacket extends SubscribePacket {}
 export interface MQTTPubrelPacket extends PubrelPacket {}
 export interface MQTTConnackPacket extends ConnackPacket {}
 export interface MQTTPingreqPacket extends PingreqPacket {}
+export interface MQTTPublishedPacket extends AedesPublishPacket {}
 
 // Map of event types to their handler signatures
 export interface MQTTEventHandlers {
@@ -45,33 +46,33 @@ type MQTTPreConnectHandler = (
   client: MQTTClient,
   packet: MQTTConnectPacket,
   callback: (error: Error | null, success: boolean) => void
-) => void;
+) => void | Promise<void>;
 
 type MQTTAuthenticateHandler = (
   client: MQTTClient,
-  username: Readonly<string | undefined>,
-  password: Readonly<Buffer | undefined>,
-  done: (error: Error | null, success: boolean | null) => void
-) => void;
+  username: string,
+  password: Buffer,
+  done?: (error: Error | null, success: boolean | null) => void
+) => void | Promise<void>;
 
 type MQTTAuthorizePublishHandler = (
   client: MQTTClient | null,
   packet: MQTTPublishPacket,
   callback: (error?: Error | null) => void
-) => void;
+) => void | Promise<void>;
 
 type MQTTAuthorizeSubscribeHandler = (
   client: MQTTClient | null,
   subscription: MQTTSubscription,
   callback: (error: Error | null, subscription?: MQTTSubscription | null) => void
-) => void;
+) => void | Promise<void>;
 
 
 type MQTTPublishedHandler = (
-  packet: MQTTPublishPacket,
+  packet: MQTTPublishedPacket,
   client: MQTTClient | null,
   callback: (error?: Error | null) => void
-) => void;
+) => void | Promise<void>;
 
 export interface MQTTHookHandlers {
    preConnect: MQTTPreConnectHandler;

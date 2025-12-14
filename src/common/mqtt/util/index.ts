@@ -1,3 +1,4 @@
+import { Logger } from "@nestjs/common";
 import { MQTTEventHandlers, MQTTHookHandlers } from "../interface";
 
 // Event wrappers with proper typing
@@ -20,15 +21,46 @@ export const EVENT_WRAPPERS: {
 };
 
 export const HOOK_WRAPPERS: {
-  [K in keyof MQTTHookHandlers]: (fn: MQTTHookHandlers[K]) => MQTTHookHandlers[K];
+  [K in keyof MQTTHookHandlers]: (fn: MQTTHookHandlers[K], logger?: Logger) => MQTTHookHandlers[K];
 } = {
-  preConnect: (fn) => (...args) => fn(...args),
-  authenticate: (fn) => (client, username, password, done) =>
-    fn(client, username, password, done),
-  authorizePublish: (fn) => (client, packet, callback) =>
-    fn(client, packet, callback),
-  authorizeSubscribe: (fn) => (client, subscription, callback) =>
-    fn(client, subscription, callback),
-  published: (fn) => (packet, client, callback) =>
-    fn(packet, client, callback),
+  preConnect: (fn, logger) => async (client, packet, cb) => {
+    try {
+      return await fn(client, packet, cb);
+    } catch (error) {
+      logger.error('[MQTT] preConnect error:', error);
+    }
+  },
+
+  authenticate: (fn, logger) => async (client, username, password, cb) => {
+    try {
+      await fn(client, username, password, cb);
+    } catch (error) {
+      logger.error('[MQTT] authenticate error:', error);
+    }
+  },
+
+  authorizePublish: (fn, logger) => async (client, packet, cb) => {
+    try {
+      return await fn(client, packet,cb);
+    } catch (error) {
+      logger.error('[MQTT] authorizePublish error:', error);
+    }
+  },
+
+  authorizeSubscribe: (fn, logger) => async (client, subscription, cb) => {
+    try {
+      return await fn(client, subscription, cb);
+    } catch (error) {
+      logger.error('[MQTT] authorizeSubscribe error:', error);
+    }
+  },
+
+  published: (fn, logger) => async (client, packet, cb) => {
+    try {
+        console.log("sumit->",packet);
+      await fn(client, packet, cb);
+    } catch (error) {
+        logger.error('[MQTT] published error:', error);
+    }
+  },
 };

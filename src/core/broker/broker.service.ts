@@ -1,17 +1,18 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
-  MQTTAuthenticate,
+
   MQTTClient,
   MQTTPublishPacket,
   MQTTSubscribePacket,
-  MQTTAuthorizePublish,
-  MQTTAuthorizeSubscribe,
-  MQTTPreConnect,
-  MQTTPublished,
+
   MQTTConnectPacket,
-  MQTTEvent
+  MQTTEvent,
+  MQTTHook,
+  MQTTSubscription,
+  MQTTPublishedPacket
 } from 'src/common/mqtt';
+import { MQTTEventEnum, MQTTHookEnum } from 'src/common/mqtt/enum';
 import { RMQPublisherSvc } from 'src/common/rmq/decorator/rmq.services.decorator';
 import { RMQPublisherService } from 'src/common/rmq/service/rmq.publisher.service';
 import { ConfigVariablesType } from 'src/config';
@@ -35,57 +36,89 @@ export class BrokerService implements OnModuleInit {
     //
   }
 
-  @MQTTEvent("closed")
-  onMqttEvent(client: MQTTClient,id:string): void {
+  @MQTTEvent(MQTTEventEnum.CLIENT)
+  onMqttEvent(client: MQTTClient): void {
     console.log(`Received MQTT event from client -> closed -> ${client.id}:`);
   }
 
-  @MQTTAuthenticate()
-  authHandler(
+  @MQTTHook(MQTTHookEnum.AUTHENTICATE)
+  async authenticateUser(
     client: MQTTClient,
-    username?: string,
-    password?: string,
-  ): boolean {
-    // params.client.publish({
-    //   topic: 'auth/logs',
-    //   payload: Buffer.from(`User ${params.username} authenticated`, 'utf-8'),
-    // }, 'called auth handler')
+    username: string,
+    password: Buffer,
+    cb: (err?: Error | null, result?: boolean) => void
+  ){
     console.log('Authenticating user:', username, 'on handler:', password);
-
-    return true;
+    cb(null, true);
+    return;
   }
 
-  @MQTTAuthorizePublish()
-  authorizePublish(client: MQTTClient, packet: MQTTPublishPacket): boolean {
-    console.log(
-      `Authorizing publish for client: ${client.id} to topic: ${packet.topic}`,
-    );
-    // Implement your authorization logic here
-    return true;
+  // @MQTTHook(MQTTHookEnum.PRE_CONNECT)
+  // async handlePreConnect(
+  //   client: MQTTClient,
+  //   packet: MQTTConnectPacket,
+  //   cb: (error: Error | null, success: boolean) => void
+  // ) {
+  //   console.log(`Pre-connecting client: ${client.id}`);
+  //   cb(null, true);
+  //   return;
+  // }
+
+  // @MQTTHook(MQTTHookEnum.AUTHORIZE_PUBLISH)
+  // async authorizePublish(
+  //   client: MQTTClient | null,
+  //   packet: MQTTPublishPacket,
+  //   cb: (error?: Error | null) => void
+  // ) {
+  //   console.log(
+  //     `Authorizing publish for client: ${client?.id} to topic: ${packet.topic}`,
+  //   );
+  //   cb(null);
+  //   return;
+  // }
+  
+  @MQTTHook(MQTTHookEnum.PUBLISHED)
+  async handlePublished(
+    client: MQTTClient | null,
+    packet: MQTTPublishedPacket,
+    cb: (error?: Error | null) => void
+  ) {
+    console.log('handlePublished->', packet?.topic);
+    console.log('handlePublished->', client?.id);
+    // console.log(
+    //   `Message published to topic: ${packet?.topic} by client: ${client?.id}`,
+    // );
+    cb(null);
+    return;
   }
 
-  @MQTTAuthorizeSubscribe()
-  authorizeSubscribe(client: MQTTClient, packet: MQTTSubscribePacket): boolean {
-    console.log('authorizeSubscribe', client.id, packet);
-    // Implement your authorization logic here
-    return true;
+  @MQTTEvent(MQTTEventEnum.PUBLISH)
+  async handlePublishedEVENT(
+    packet: MQTTPublishedPacket,
+    client: MQTTClient | null
+  ) {
+    console.log('handlePublished->', packet?.topic);
+    console.log('handlePublished->', client?.id);
+    // console.log(
+    //   `Message published to topic: ${packet?.topic} by client: ${client?.id}`,
+    // );
+
+    return;
   }
 
-  @MQTTPreConnect()
-  preConnect(client: MQTTClient, packet: MQTTConnectPacket): boolean {
-    console.log('preconnect->', this);
-    console.log('preconnect->', this.configService.get('app'));
-    console.log('preConnect', client.id, packet.clientId);
-    console.log(`Pre-connecting client: ${client.id}`);
-    // Implement your pre-connection logic here
-    return true;
-  }
+  // @MQTTHook(MQTTHookEnum.AUTHORIZE_SUBSCRIBE)
+  // async authorizeSubscribe(
+  // client: MQTTClient | null,
+  // subscription: MQTTSubscription,
+  // cb: (error: Error | null, subscription?: MQTTSubscription | null) => void
+  // ) {
+  //   console.log(
+  //     `Authorizing subscribe for client: ${client?.id} to topic: ${subscription.topic}`,
+  //   );
+  //   cb(null, subscription);
+  //   return;
+  // }
 
-  @MQTTPublished()
-  onPublished(client: MQTTClient, packet: MQTTPublishPacket): void {
-    console.log(
-      `Message published to topic: ${packet.topic} by client: ${client.id}`,
-    );
-    // Implement your post-publish logic here
-  }
+  
+
 }

@@ -1,12 +1,13 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { DiscoveryService, MetadataScanner } from '@nestjs/core';
 import { MqttBrokerService } from './mqtt.broker.service';
 import { MQTT_BROKER_EVENTS_METADATA_CONSTANT, MQTT_BROKER_HOOKS_METADATA_CONSTANT } from '../constant';
-import { EVENT_WRAPPERS } from '../util';
+import { EVENT_WRAPPERS, HOOK_WRAPPERS } from '../util';
 import { MQTTEventHandler, MQTTHookHandler } from '../interface';
 
 @Injectable()
 export class MqttBrokerDiscoveryService implements OnModuleInit {
+  private readonly _logger = new Logger(MqttBrokerDiscoveryService.name);
   constructor(
     private readonly discoveryService: DiscoveryService,
     private readonly metadataScanner: MetadataScanner,
@@ -46,7 +47,8 @@ export class MqttBrokerDiscoveryService implements OnModuleInit {
         if (hook_type) {
           // need to bind the method to the instance,  so method can access "this"
           const handler = instance[method_name].bind(instance);
-          hook_handlers.push({ hook: hook_type, callback: handler });
+          const wrapper = HOOK_WRAPPERS[hook_type];
+          hook_handlers.push({ hook: hook_type, callback: wrapper(handler,this._logger) });
         }
 
         const event_type = Reflect.getMetadata(
@@ -69,35 +71,5 @@ export class MqttBrokerDiscoveryService implements OnModuleInit {
 
     this.brokerService.registerEventHandlers(event_handlers);
     this.brokerService.registerHookHandlers(hook_handlers);
-  }
-
-  /**
-   * Route decorator handler functions -> broker service (aedes) binding
-   */
-  private registerHook(hook: string, handler: any) {
-    switch (hook) {
-      case 'authenticate':
-        this.brokerService.setAuthenticateHandler(handler);
-        break;
-
-      case 'authorizePublish':
-        this.brokerService.setAuthorizePublishHandler(handler);
-        break;
-
-      case 'authorizeSubscribe':
-        this.brokerService.setAuthorizeSubscribeHandler(handler);
-        break;
-
-      case 'preConnect':
-        this.brokerService.setPreConnectHandler(handler);
-        break;
-
-      case 'published':
-        this.brokerService.setPublishedHandler(handler);
-        break;
-
-      default:
-        console.warn(`[MQTT] Unknown broker hook: ${hook}`);
-    }
   }
 }

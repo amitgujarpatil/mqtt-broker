@@ -8,11 +8,6 @@ export {
 } from './interface';
 
 export {
-  MQTTAuthenticate,
-  MQTTAuthorizePublish,
-  MQTTAuthorizeSubscribe,
-  MQTTPreConnect,
-  MQTTPublished,
   MQTTEvent,
   MQTTHook
 } from './decorator';

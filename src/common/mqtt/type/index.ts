@@ -7,9 +7,3 @@ export type DynamicModuleOptions<T> = {
   useClass?: new (...args: any[]) => T;
 };
 
-export type MQTTEventType = 'client' | 'closed' | 'clientReady' | 'clientDisconnect' | 'clientError' | 'connectionError' | 'publish' | 'ack' | 'subscribe' | 'unsubscribe' | 'connackSent' | 'keepaliveTimeout' | 'ping';
-
-export type MQTTEventHandler = {
-  event: MQTTEventType;
-  callback: (...args: any[]) => void | Promise<void>;
-};
